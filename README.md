@@ -1,3 +1,30 @@
+# ScamShield
+
+AI-powered scam and fraud detection for messages, emails, and texts. Analysis is powered by OpenAI.
+
+## Running the app (with OpenAI analysis)
+
+1. **Install dependencies:** `npm install`
+
+2. **Set your OpenAI API key:** Copy `.env.example` to `.env` and add your key:
+   ```bash
+   cp .env.example .env
+   # Edit .env and set OPENAI_API_KEY=sk-...
+   ```
+   Get a key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
+
+3. **Run the API server and the frontend:**
+   ```bash
+   npm run dev:all
+   ```
+   Or in two terminals:
+   - `npm run server` (API on http://localhost:3001)
+   - `npm run dev` (Vite on http://localhost:5173, proxies `/api` to the server)
+
+4. Open http://localhost:5173 and use the scanner. Analysis runs through the backend and OpenAI.
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

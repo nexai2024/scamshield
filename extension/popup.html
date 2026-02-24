@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 320px;
+      padding: 16px;
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    h1 { font-size: 16px; margin: 0 0 12px 0; color: #fff; }
+    p { font-size: 13px; color: #94a3b8; margin: 0 0 12px 0; }
+    button {
+      width: 100%;
+      padding: 10px 16px;
+      background: #10b981;
+      color: #022c22;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover { background: #34d399; }
+    button:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; }
+    .small { font-size: 11px; color: #64748b; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>🛡️ ScamShield</h1>
+  <p>Select text on the page, then click below to open ScamShield and analyze it.</p>
+  <button id="scan">Scan selected text</button>
+  <p class="small">Opens ScamShield in a new tab with the text ready to analyze.</p>
+  <script src="popup.js"></script>
+</body>
+</html>

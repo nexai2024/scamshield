@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { 
-  ShieldCheck, 
-  Scan, 
-  Upload, 
-  AlertTriangle, 
-  CheckCircle, 
-  Lock, 
+import React, { useState, useEffect } from 'react';
+import {
+  ShieldCheck,
+  Scan,
+  Upload,
+  AlertTriangle,
+  CheckCircle,
+  Lock,
   AlertOctagon,
   Copy,
   Eye,
@@ -15,30 +15,35 @@ import {
   Zap,
   Check,
   LogOut,
-  User
+  User,
+  History,
+  Settings,
+  Users,
 } from 'lucide-react';
 import './App.css';
-// --- TYPES ---
-interface AnalysisResult {
-  risk_score: number;
-  risk_level: "Safe" | "Low Risk" | "Medium Risk" | "High Risk" | "Critical";
-  scam_type: string;
-  red_flags: string[];
-  verdict_summary: string;
-  advice: string;
-}
-
-type ViewState = 'landing' | 'auth' | 'pricing' | 'dashboard';
-type UserState = { email: string; isSubscribed: boolean } | null;
+import type { AnalysisResult, UserState, ViewState, PlanType, ThemeMode } from './types';
+import { getStoredTheme, setStoredTheme, applyTheme, getEffectiveTheme } from './utils/theme';
+import { canScanToday, getScansUsedToday, incrementScansToday, FREE_DAILY_LIMIT_CONST } from './utils/freeTier';
+import { addScan } from './utils/scanHistory';
+import { ScamAlerts } from './components/ScamAlerts';
+import { Testimonials } from './components/Testimonials';
+import { Settings as SettingsModal } from './components/Settings';
+import { ScanHistory } from './components/ScanHistory';
+import { Referral } from './components/Referral';
+import { ReportActions } from './components/ReportActions';
+import type { ScanHistoryEntry } from './types';
 
 // --- CONFIGURATION ---
-const SIMULATION_MODE = true; 
+// Analysis is performed by the backend via OpenAI (see server/index.js). Run the API with: npm run server
 
 export default function ScamShieldApp() {
   // --- GLOBAL STATE ---
   const [currentView, setCurrentView] = useState<ViewState>('landing');
-  const [user, setUser] = useState<UserState>(null);
-  
+  const [user, setUser] = useState<UserState | null>(null);
+  const [theme, setTheme] = useState(getStoredTheme);
+  const [showSettings, setShowSettings] = useState(false);
+  const [historyEntry, setHistoryEntry] = useState<ScanHistoryEntry | null>(null);
+
   // --- DASHBOARD STATE ---
   const [inputText, setInputText] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
@@ -46,87 +51,72 @@ export default function ScamShieldApp() {
   const [dragActive, setDragActive] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
 
-  // --- MOCK API LOGIC ---
-  const simulateAnalysis = (text: string): AnalysisResult => {
-    const lowerText = text.toLowerCase();
-    let score = 10;
-    const flags: string[] = [];
+  const isDark = getEffectiveTheme(theme) === 'dark';
 
-    if (lowerText.includes('kindly')) { score += 20; flags.push('Unnatural phrasing ("Kindly")'); }
-    if (lowerText.includes('gift card') || lowerText.includes('steam card')) { score += 40; flags.push("Payment requested via Gift Card"); }
-    if (lowerText.includes('urgent') || lowerText.includes('immediately')) { score += 15; flags.push("Artificial urgency created"); }
-    if (lowerText.includes('zelle') || lowerText.includes('cashapp')) { score += 15; flags.push("Unprotected payment method requested"); }
-    if (lowerText.includes('irs') || lowerText.includes('police')) { score += 20; flags.push("Impersonation of authority"); }
-    if (lowerText.includes('verify') && lowerText.includes('code')) { score += 30; flags.push("2FA/Verification Code phishing"); }
-    
-    score = Math.min(score, 99);
-    score = Math.max(score, 5);
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
 
-    let level: AnalysisResult['risk_level'] = "Safe";
-    if (score > 20) level = "Low Risk";
-    if (score > 50) level = "Medium Risk";
-    if (score > 75) level = "High Risk";
-    if (score > 90) level = "Critical";
-
-    return {
-      risk_score: score,
-      risk_level: level,
-      scam_type: score > 50 ? "Financial Fraud / Phishing" : "N/A",
-      red_flags: flags.length > 0 ? flags : ["No obvious red flags detected."],
-      verdict_summary: score > 50 
-        ? "This message exhibits classic patterns of financial fraud. The sender is attempting to bypass standard safety protocols." 
-        : "The message appears standard, though you should always verify the sender's identity independently.",
-      advice: score > 50 
-        ? "Do not reply. Block the number/email immediately. Do not click any links." 
-        : "Proceed with caution. If they ask for money later, re-scan the message."
-    };
-  };
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const prefill = params.get('text');
+    if (prefill) setInputText(decodeURIComponent(prefill));
+  }, []);
 
   const handleAnalyze = async () => {
-    if (!inputText && !fileName) return;
+    const textToAnalyze = inputText?.trim() || (fileName ? 'image_analysis_placeholder' : '');
+    if (!textToAnalyze) return;
+    const email = user?.email ?? 'anonymous';
+    const subscribed = !!user?.isSubscribed;
+    if (!canScanToday(email, subscribed)) {
+      setCurrentView('pricing');
+      return;
+    }
     setAnalyzing(true);
     setResult(null);
 
-    // Guard: Require subscription
-    if (!user?.isSubscribed) {
-       setCurrentView('pricing');
-       return;
-    }
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: textToAnalyze }),
+      });
+      const data = await response.json();
 
-    if (SIMULATION_MODE) {
-      setTimeout(() => {
-        const mockResult = simulateAnalysis(inputText || "image_analysis_placeholder");
-        setResult(mockResult);
+      if (!response.ok) {
+        const msg = data?.error || `Request failed (${response.status})`;
+        alert(msg);
         setAnalyzing(false);
-      }, 2000);
-    } else {
-      try {
-        const response = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: inputText }),
-        });
-        const data = await response.json();
-        setResult(data);
-      } catch (error) {
-        console.error("API Error", error);
-        alert("Failed to connect to ScamShield API");
-      } finally {
-        setAnalyzing(false);
+        return;
       }
+
+      setResult(data as AnalysisResult);
+      if (user?.email && (user.plan === 'pro' || user.plan === 'lifetime' || user.plan === 'family')) {
+        addScan(user.email, textToAnalyze.slice(0, 200), data as AnalysisResult);
+      }
+      incrementScansToday(email);
+    } catch (error) {
+      console.error('API Error', error);
+      alert('Failed to connect to the analysis service. Make sure the API server is running (npm run server).');
+    } finally {
+      setAnalyzing(false);
     }
+  };
+
+  const handleThemeChange = (t: ThemeMode) => {
+    setStoredTheme(t);
+    setTheme(t);
   };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulating Auth
-    setUser({ email: 'demo@user.com', isSubscribed: false });
-    setCurrentView('dashboard'); // Redirect to dashboard, which will prompt for pricing if used
+    setUser({ email: 'demo@user.com', isSubscribed: false, plan: 'basic' });
+    setCurrentView('dashboard');
   };
 
-  const handleSubscribe = () => {
+  const handleSubscribe = (plan: PlanType) => {
     if (user) {
-      setUser({ ...user, isSubscribed: true });
+      setUser({ ...user, isSubscribed: true, plan });
       setCurrentView('dashboard');
     } else {
       setCurrentView('auth');
@@ -145,26 +135,43 @@ export default function ScamShieldApp() {
   const Navigation: React.FC = () => (
     <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => setCurrentView('landing')}/>
-        
+        <button
+          type="button"
+          onClick={() => { setCurrentView('landing'); setHistoryEntry(null); }}
+          className="flex items-center gap-2 cursor-pointer rounded-lg hover:opacity-90 transition-opacity"
+          aria-label="Go to home"
+        >
           <div className="bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
             <ShieldCheck className="w-6 h-6 text-emerald-500" />
           </div>
           <span className="text-xl font-bold tracking-tight text-white">Scam<span className="text-emerald-500">Shield</span></span>
-        </div>
-        
+        </button>
+
         <nav className="flex items-center gap-6">
           {user ? (
             <>
               <button 
-                onClick={() => setCurrentView('dashboard')}
+                onClick={() => { setCurrentView('dashboard'); setHistoryEntry(null); }}
                 className={`text-sm font-medium transition-colors ${currentView === 'dashboard' ? 'text-white' : 'text-slate-400 hover:text-white'}`}
               >
                 Scanner
               </button>
-              <div className="h-6 w-px bg-slate-800 mx-2"></div>
+              <button 
+                onClick={() => setCurrentView('history')}
+                className={`text-sm font-medium transition-colors ${currentView === 'history' ? 'text-white' : 'text-slate-400 hover:text-white'}`}
+              >
+                <span className="hidden sm:inline">History</span>
+                <History className="w-4 h-4 sm:hidden" />
+              </button>
+              <button 
+                onClick={() => setShowSettings(true)}
+                className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"
+                title="Settings"
+                aria-label="Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+              <div className="h-6 w-px bg-slate-800 m x-2"></div>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-slate-400 hidden sm:block">{user.email}</span>
                 <button 
@@ -199,6 +206,7 @@ export default function ScamShieldApp() {
             </>
           )}
         </nav>
+      </div>
     </header>
   );
 
@@ -212,7 +220,7 @@ export default function ScamShieldApp() {
             <Lock className="w-3 h-3" /> AI-Powered Fraud Detection
          </div>
          <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight mb-6 leading-tight">
-            Stop the Scam <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">Before It Starts</span>
+            Stop the Scam <br/><span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-cyan-500">Before It Starts</span>
          </h1>
          <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
             Instantly analyze suspicious texts, emails, and dating profiles. 
@@ -241,6 +249,13 @@ export default function ScamShieldApp() {
             <div className="flex items-center gap-2 text-sm font-medium"><CheckCircle className="w-4 h-4" /> 10,000+ Scans</div>
             <div className="flex items-center gap-2 text-sm font-medium"><Lock className="w-4 h-4" /> 256-bit Encryption</div>
          </div>
+      </section>
+
+      {/* Testimonials & social proof - Enhancement 7 */}
+      <section className="py-24 border-t border-slate-800/50">
+        <div className="max-w-6xl mx-auto px-4">
+          <Testimonials />
+        </div>
       </section>
 
       {/* Features Grid */}
@@ -334,7 +349,7 @@ export default function ScamShieldApp() {
         <p className="text-slate-400 text-lg">Protect yourself from fraud for less than the cost of a coffee.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
         {/* Free Tier */}
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col">
           <h3 className="text-xl font-bold text-white mb-2">Basic</h3>
@@ -348,7 +363,7 @@ export default function ScamShieldApp() {
           </ul>
           <button 
             onClick={() => {
-              setUser({ email: 'free@user.com', isSubscribed: false });
+              setUser({ email: 'free@user.com', isSubscribed: false, plan: 'basic' });
               setCurrentView('dashboard');
             }}
             className="w-full py-3 rounded-xl border border-slate-700 text-white font-medium hover:bg-slate-800 transition-colors"
@@ -372,7 +387,7 @@ export default function ScamShieldApp() {
             <li className="flex items-center gap-3 text-white"><Check className="w-5 h-5 text-emerald-400" /> 24/7 Priority API Access</li>
           </ul>
           <button 
-            onClick={handleSubscribe}
+            onClick={() => handleSubscribe('pro')}
             className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold transition-colors shadow-lg shadow-emerald-500/25"
           >
             Start 7-Day Free Trial
@@ -390,23 +405,49 @@ export default function ScamShieldApp() {
             <li className="flex items-center gap-3 text-slate-300"><Check className="w-5 h-5 text-emerald-500" /> No Monthly Fees</li>
           </ul>
           <button 
-             onClick={handleSubscribe}
+             onClick={() => handleSubscribe('lifetime')}
              className="w-full py-3 rounded-xl border border-slate-700 text-white font-medium hover:bg-slate-800 transition-colors"
           >
             Get Lifetime Access
+          </button>
+        </div>
+
+        {/* Family Tier - Enhancement 4 */}
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col">
+          <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+            <Users className="w-5 h-5 text-emerald-500" /> Family
+          </h3>
+          <div className="text-4xl font-bold text-white mb-6">$14<span className="text-lg text-slate-500 font-normal">/mo</span></div>
+          <p className="text-slate-400 mb-8">Protect your whole household. Up to 6 members.</p>
+          <ul className="space-y-4 mb-8 flex-1">
+            <li className="flex items-center gap-3 text-slate-300"><Check className="w-5 h-5 text-emerald-500" /> Everything in Pro</li>
+            <li className="flex items-center gap-3 text-slate-300"><Check className="w-5 h-5 text-emerald-500" /> Up to 6 family members</li>
+            <li className="flex items-center gap-3 text-slate-300"><Check className="w-5 h-5 text-emerald-500" /> Shared scan history &amp; alerts</li>
+          </ul>
+          <button 
+             onClick={() => handleSubscribe('family')}
+             className="w-full py-3 rounded-xl border border-slate-700 text-white font-medium hover:bg-slate-800 transition-colors"
+          >
+            Start Family Plan
           </button>
         </div>
       </div>
     </div>
   );
 
+  const scansUsed = user ? getScansUsedToday(user.email) : 0;
+  const canScan = user ? canScanToday(user.email, !!user?.isSubscribed) : false;
+
   const DashboardView = () => (
     <div className="max-w-5xl mx-auto px-4 py-12 animate-in fade-in duration-500">
       {!user?.isSubscribed && (
-        <div className="mb-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-between">
+        <div className="mb-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex flex-wrap items-center justify-between gap-3">
            <div className="flex items-center gap-3">
-             <AlertTriangle className="w-5 h-5 text-amber-500" />
-             <span className="text-amber-200 text-sm">You are on the free plan. Upgrade for unlimited image scans.</span>
+             <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+             <span className="text-amber-200 text-sm">
+               Free plan: <strong>{scansUsed}/{FREE_DAILY_LIMIT_CONST}</strong> scan(s) used today.
+               {!canScan && ' Upgrade for unlimited scans.'}
+             </span>
            </div>
            <button 
             onClick={() => setCurrentView('pricing')}
@@ -420,13 +461,20 @@ export default function ScamShieldApp() {
       {/* --- RESULTS DISPLAY --- */}
       {result ? (
         <div className="space-y-8">
-           <div className="flex items-center justify-between">
-              <button 
-                onClick={() => { setResult(null); setInputText(''); }}
-                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-              >
-                <RefreshCw className="w-4 h-4" /> Scan Another
-              </button>
+           <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => { setResult(null); setInputText(''); setHistoryEntry(null); }}
+                  className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" /> Scan Another
+                </button>
+                <ReportActions
+                  entry={historyEntry || (result ? { id: '', date: new Date().toISOString(), snippet: inputText.slice(0, 200), risk_score: result.risk_score, risk_level: result.risk_level, scam_type: result.scam_type, fullResult: result } : null)}
+                  isProOrLifetime={user?.plan === 'pro' || user?.plan === 'lifetime' || user?.plan === 'family'}
+                  isDark={isDark}
+                />
+              </div>
               <button 
                 onClick={() => {
                   navigator.clipboard.writeText(`🚨 ScamShield Risk: ${result.risk_level}`);
@@ -473,7 +521,27 @@ export default function ScamShieldApp() {
                    <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">Analysis Summary</h3>
                    <p className="text-white leading-relaxed text-lg">{result.verdict_summary}</p>
                  </div>
-                 
+
+                 {result.why_risky && (
+                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                     <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">Why this is risky</h3>
+                     <p className="text-white leading-relaxed">{result.why_risky}</p>
+                   </div>
+                 )}
+
+                 {result.triggered_phrases && result.triggered_phrases.length > 0 && (
+                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                     <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">Phrases that triggered the score</h3>
+                     <div className="flex flex-wrap gap-2">
+                       {result.triggered_phrases.map((p, i) => (
+                         <span key={i} className="px-3 py-1 rounded-lg bg-slate-800 text-slate-300 text-sm font-mono">
+                           {p}
+                         </span>
+                       ))}
+                     </div>
+                   </div>
+                 )}
+
                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
                    <div className="flex items-center gap-2 mb-4">
                       <AlertOctagon className="w-5 h-5 text-red-500" />
@@ -489,7 +557,7 @@ export default function ScamShieldApp() {
                    </div>
                  </div>
 
-                 <div className="bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 p-6 rounded-2xl">
+                 <div className="bg-linear-to-r from-slate-900 to-slate-800 border border-slate-700 p-6 rounded-2xl">
                     <h3 className="text-emerald-400 font-bold mb-2 uppercase text-xs tracking-wider">Recommended Action</h3>
                     <p className="text-white font-medium">{result.advice}</p>
                  </div>
@@ -543,10 +611,10 @@ export default function ScamShieldApp() {
 
                  <button
                   onClick={handleAnalyze}
-                  disabled={analyzing || (!inputText && !fileName)}
+                  disabled={analyzing || (!inputText && !fileName) || !canScan}
                   className={`
                     w-full md:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all
-                    ${analyzing || (!inputText && !fileName) 
+                    ${analyzing || (!inputText && !fileName) || !canScan
                       ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
                       : 'bg-emerald-500 hover:bg-emerald-400 text-slate-900 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95'}
                   `}
@@ -556,6 +624,18 @@ export default function ScamShieldApp() {
               </div>
            </div>
            
+           {/* Scam alerts & tips - Enhancement 5 */}
+           <div className="max-w-3xl mx-auto">
+             <ScamAlerts />
+           </div>
+
+           {/* Referral - Enhancement 9 */}
+           {user?.email && (
+             <div className="max-w-3xl mx-auto">
+               <Referral userEmail={user.email} isDark={isDark} />
+             </div>
+           )}
+
            {/* Quick Templates */}
            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 opacity-70 hover:opacity-100 transition-opacity">
               <div onClick={() => setInputText("Kindly send the $200 refundable insurance fee via Zelle immediately.")} className="p-4 bg-slate-900 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-600">
@@ -577,21 +657,42 @@ export default function ScamShieldApp() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30">
+    <div className={`min-h-screen font-sans selection:bg-emerald-500/30 ${isDark ? 'bg-slate-950 text-slate-200' : 'bg-slate-100 text-slate-800'}`}>
       <Navigation />
-      
+
       <main>
         {currentView === 'landing' && <LandingView />}
         {currentView === 'auth' && <AuthView />}
         {currentView === 'pricing' && <PricingView />}
         {currentView === 'dashboard' && <DashboardView />}
+        {currentView === 'history' && user && (
+          <ScanHistory
+            userEmail={user.email}
+            onBack={() => setCurrentView('dashboard')}
+            onSelectEntry={(entry) => {
+              setHistoryEntry(entry);
+              setResult(entry.fullResult);
+              setCurrentView('dashboard');
+            }}
+            isDark={isDark}
+          />
+        )}
       </main>
 
-      <footer className="border-t border-slate-800 py-8 mt-12 bg-slate-900/30">
+      <footer className={`border-t py-8 mt-12 ${isDark ? 'border-slate-800 bg-slate-900/30' : 'border-slate-200 bg-slate-200/50'}`}>
         <div className="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
           <p>© {new Date().getFullYear()} ScamShield AI. Not legal advice. For informational purposes only.</p>
         </div>
       </footer>
+
+      {showSettings && (
+        <SettingsModal
+          theme={theme}
+          onThemeChange={handleThemeChange}
+          onClose={() => setShowSettings(false)}
+          isDark={isDark}
+        />
+      )}
     </div>
   );
 }
