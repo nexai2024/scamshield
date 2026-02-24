@@ -11,7 +11,8 @@ AI-powered scam and fraud detection for messages, emails, and texts. Analysis is
    cp .env.example .env
    # Edit .env and set OPENAI_API_KEY=sk-...
    ```
-   Get a key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
+   Get a key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).  
+   **Security:** Never commit `.env` or real API keys. If a key was ever committed, rotate it (revoke and create a new one) at OpenAI immediately.
 
 3. **Run the API server and the frontend:**
    ```bash
