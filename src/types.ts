@@ -12,14 +12,8 @@ export interface AnalysisResult {
   triggered_phrases?: string[];
 }
 
-export type PlanType = 'basic' | 'pro' | 'lifetime' | 'family';
-
-export interface UserState {
-  email: string;
-  isSubscribed: boolean;
-  plan?: PlanType;
-}
-
+// Auth is handled by an external provider. When you integrate one, you can add
+// a minimal user type here (e.g. id, email from provider) and pass it into the app.
 // Scan history entry (Enhancement 2)
 export interface ScanHistoryEntry {
   id: string;
@@ -31,6 +25,6 @@ export interface ScanHistoryEntry {
   fullResult: AnalysisResult;
 }
 
-export type ViewState = 'landing' | 'auth' | 'pricing' | 'dashboard' | 'history' | 'settings';
+export type ViewState = 'landing' | 'pricing' | 'dashboard' | 'history' | 'settings';
 
 export type ThemeMode = 'dark' | 'light' | 'system';

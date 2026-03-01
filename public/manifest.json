@@ -1,0 +1,17 @@
+{
+  "name": "ScamShield",
+  "short_name": "ScamShield",
+  "description": "AI-powered scam and fraud detection for messages and emails",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

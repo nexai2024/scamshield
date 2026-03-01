@@ -1,17 +1,34 @@
 import { AlertTriangle, Lightbulb } from 'lucide-react';
 import { scamAlerts, scamTips } from '../data/scamAlerts';
 
-const severityClass = {
+const severityClassDark = {
   critical: 'bg-red-500/10 border-red-500/20 text-red-400',
   warning: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
   info: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
 };
 
-export function ScamAlerts() {
+const severityClassLight = {
+  critical: 'bg-red-500/10 border-red-500/30 text-red-600',
+  warning: 'bg-amber-500/10 border-amber-500/30 text-amber-600',
+  info: 'bg-blue-500/10 border-blue-500/30 text-blue-600',
+};
+
+interface ScamAlertsProps {
+  isDark?: boolean;
+}
+
+export function ScamAlerts({ isDark = true }: ScamAlertsProps) {
+  const severityClass = isDark ? severityClassDark : severityClassLight;
+  const cardBg = isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white/80 border-slate-200';
+  const textPrimary = isDark ? 'text-white' : 'text-slate-900';
+  const textMuted = isDark ? 'text-slate-400' : 'text-slate-600';
+  const textDim = isDark ? 'text-slate-500' : 'text-slate-500';
+  const tipCard = isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-white border-slate-200 hover:border-slate-300';
+
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${textPrimary}`}>
           <AlertTriangle className="w-5 h-5 text-amber-500" />
           Recent scam alerts
         </h2>
@@ -19,13 +36,13 @@ export function ScamAlerts() {
           {scamAlerts.map((a) => (
             <div
               key={a.id}
-              className={`p-4 rounded-xl border ${severityClass[a.severity]} bg-slate-900/50 border-slate-800`}
+              className={`p-4 rounded-xl border ${severityClass[a.severity]} ${cardBg}`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="font-medium text-white">{a.title}</p>
-                  <p className="text-sm text-slate-400 mt-1">{a.summary}</p>
-                  <p className="text-xs text-slate-500 mt-2">
+                  <p className={`font-medium ${textPrimary}`}>{a.title}</p>
+                  <p className={`text-sm mt-1 ${textMuted}`}>{a.summary}</p>
+                  <p className={`text-xs mt-2 ${textDim}`}>
                     {a.date}
                     {a.region ? ` · ${a.region}` : ''}
                   </p>
@@ -36,7 +53,7 @@ export function ScamAlerts() {
         </div>
       </section>
       <section>
-        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${textPrimary}`}>
           <Lightbulb className="w-5 h-5 text-emerald-500" />
           Safety tips
         </h2>
@@ -44,10 +61,10 @@ export function ScamAlerts() {
           {scamTips.map((t) => (
             <div
               key={t.id}
-              className="p-4 bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition-colors"
+              className={`p-4 border rounded-xl transition-colors ${tipCard}`}
             >
-              <h3 className="font-semibold text-white mb-1">{t.title}</h3>
-              <p className="text-sm text-slate-400">{t.body}</p>
+              <h3 className={`font-semibold mb-1 ${textPrimary}`}>{t.title}</h3>
+              <p className={`text-sm ${textMuted}`}>{t.body}</p>
             </div>
           ))}
         </div>

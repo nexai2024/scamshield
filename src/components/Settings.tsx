@@ -2,6 +2,9 @@ import React from 'react';
 import { X, Sun, Moon, Monitor } from 'lucide-react';
 import type { ThemeMode } from '../types';
 import { applyTheme } from '../utils/theme';
+import { DataPolicy } from './DataPolicy';
+import { FAQ } from './FAQ';
+import { faqItems } from '../data/faq';
 
 interface SettingsProps {
   theme: ThemeMode;
@@ -60,6 +63,12 @@ export function Settings({ theme, onThemeChange, onClose, isDark }: SettingsProp
               </button>
             ))}
           </div>
+        </section>
+        <section className={`mt-6 pt-6 border-t ${border}`}>
+          <DataPolicy isDark={isDark} />
+        </section>
+        <section className={`mt-6 pt-6 border-t ${border}`}>
+          <FAQ items={faqItems} isDark={isDark} title="FAQ" />
         </section>
         <p className={`mt-6 text-xs ${textMuted}`}>
           Language and more options coming soon.
