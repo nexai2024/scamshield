@@ -17,7 +17,6 @@ import {
   Check,
   History,
   Settings,
-  Users,
 } from 'lucide-react';
 import './App.css';
 import type { AnalysisResult, ThemeMode } from './types';
@@ -47,11 +46,11 @@ import { TourOverlay } from './components/TourOverlay';
 import { sampleScans } from './data/sampleScans';
 import { Tooltip } from './components/ui/Tooltip';
 import type { ScanHistoryEntry } from './types';
+import { useUser, useAuth, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
 
 // --- CONFIGURATION ---
 // Analysis is performed by the backend via OpenAI (see server/index.js). Run the API with: npm run server
 
-/** Used for scan limits and history until you plug in external auth. */
 const GUEST_USER_ID = 'guest';
 
 const ROUTES = { landing: '/', pricing: '/pricing', dashboard: '/dashboard', history: '/history' } as const;
@@ -72,6 +71,11 @@ export default function ScamShieldApp() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const toast = useToast();
   const { hasCompletedTour, startTour } = useTour();
+  const { user, isLoaded: userLoaded } = useUser();
+  const { getToken } = useAuth();
+
+  const userId = user?.id ?? GUEST_USER_ID;
+  const isPro = (user?.publicMetadata as { plan?: string } | undefined)?.plan === 'pro';
 
   // --- DASHBOARD STATE ---
   const [inputText, setInputText] = useState('');
@@ -99,12 +103,18 @@ export default function ScamShieldApp() {
     if (prefill) setInputText(decodeURIComponent(prefill));
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscription') === 'success') {
+      toast.showToast('Welcome to Pro! You have unlimited scans.');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   const handleAnalyze = async () => {
     const textToAnalyze = inputText?.trim() || (fileName ? 'image_analysis_placeholder' : '');
     if (!textToAnalyze) return;
-    const userId = GUEST_USER_ID;
-    const subscribed = false;
-    if (!canScanToday(userId, subscribed)) {
+    if (!canScanToday(userId, isPro)) {
       setView('pricing');
       return;
     }
@@ -164,7 +174,7 @@ export default function ScamShieldApp() {
           <span className={`text-xl font-bold tracking-tight ${navLinkActive}`}>Scam<span className="text-emerald-500">Shield</span></span>
         </button>
 
-        <nav className="flex items-center gap-6">
+        <nav className="flex items-center gap-4 sm:gap-6">
           <button 
             onClick={() => { setView('dashboard'); setHistoryEntry(null); }}
             className={`text-sm font-medium transition-colors ${currentView === 'dashboard' ? navLinkActive : navLinkInactive}`}
@@ -194,6 +204,26 @@ export default function ScamShieldApp() {
               <Settings className="w-4 h-4" />
             </button>
           </Tooltip>
+          {userLoaded && (
+            <>
+              {user ? (
+                <UserButton afterSignOutUrl="/" />
+              ) : (
+                <span className="flex items-center gap-2">
+                  <SignInButton mode="modal">
+                    <button className={`text-sm font-medium px-3 py-1.5 rounded-lg border transition-colors ${isDark ? 'border-slate-600 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'}`}>
+                      Sign in
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button className="text-sm font-medium px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-900 transition-colors">
+                      Sign up
+                    </button>
+                  </SignUpButton>
+                </span>
+              )}
+            </>
+          )}
         </nav>
       </div>
     </header>
@@ -313,6 +343,30 @@ export default function ScamShieldApp() {
   const priceCardDim = isDark ? 'text-slate-500' : 'text-slate-500';
   const priceBorderBtn = isDark ? 'border-slate-700 text-white hover:bg-slate-800' : 'border-slate-300 text-slate-900 hover:bg-slate-100';
 
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const handleSubscribePro = async () => {
+    if (!user) {
+      toast.showToast('Sign in to subscribe.', 'info');
+      return;
+    }
+    setCheckoutLoading(true);
+    try {
+      const token = await getToken();
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Checkout failed');
+      if (data?.url) window.location.href = data.url;
+      else throw new Error('No checkout URL');
+    } catch (e) {
+      toast.showToast(e instanceof Error ? e.message : 'Could not start checkout', 'error');
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   const pricingNavLinks = [{ id: 'plans', label: 'Plans' }];
 
   const PricingView = () => (
@@ -321,93 +375,62 @@ export default function ScamShieldApp() {
       <div id="plans" className={`${CONTENT_MAX_W} mx-auto py-20 px-4`}>
         <div className="text-center mb-16">
           <h2 className={`text-3xl md:text-5xl font-bold mb-6 ${textPrimary}`}>Simple, Transparent Pricing</h2>
-          <p className={`${textMuted} text-lg`}>Protect yourself from fraud for less than the cost of a coffee.</p>
+          <p className={`${textMuted} text-lg`}>Two tiers: Free (1 scan/day) or Pro (unlimited) for $8.99/mo.</p>
         </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
-        <div className={`${cardBg} border rounded-3xl p-8 flex flex-col ${cardBorder}`}>
-          <h3 className={`text-xl font-bold mb-2 ${textPrimary}`}>Basic</h3>
-          <div className={`text-4xl font-bold mb-6 ${textPrimary}`}>$0<span className={`text-lg font-normal ${priceCardDim}`}>/mo</span></div>
-          <p className={`${textMuted} mb-8`}>Good for testing the waters.</p>
-          <ul className="space-y-4 mb-8 flex-1">
-            <li className={`flex items-center gap-3 ${priceCardMuted}`}><Check className="w-5 h-5 text-emerald-500" /> 1 Scan per day</li>
-            <li className={`flex items-center gap-3 ${priceCardMuted}`}><Check className="w-5 h-5 text-emerald-500" /> Basic Text Analysis</li>
-            <li className={`flex items-center gap-3 ${priceCardDim}`}><X className="w-5 h-5" /> Image Analysis</li>
-            <li className={`flex items-center gap-3 ${priceCardDim}`}><X className="w-5 h-5" /> Priority Support</li>
-          </ul>
-          <button 
-            onClick={() => setView('dashboard')}
-            className={`w-full py-3 rounded-xl border font-medium transition-colors ${priceBorderBtn}`}
-          >
-            Go to Scanner
-          </button>
-        </div>
-
-        <div className={`${cardBg} border-2 border-emerald-500 rounded-3xl p-8 flex flex-col relative transform md:-translate-y-4 shadow-2xl shadow-emerald-500/10 ${isDark ? '' : 'bg-emerald-50/50'}`}>
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-emerald-500 text-slate-900 px-4 py-1 rounded-full text-sm font-bold">
-            Most Popular
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch max-w-4xl mx-auto">
+          <div className={`${cardBg} border rounded-3xl p-8 flex flex-col ${cardBorder}`}>
+            <h3 className={`text-xl font-bold mb-2 ${textPrimary}`}>Free</h3>
+            <div className={`text-4xl font-bold mb-6 ${textPrimary}`}>$0<span className={`text-lg font-normal ${priceCardDim}`}>/mo</span></div>
+            <p className={`${textMuted} mb-8`}>1 scan per day. No credit card required.</p>
+            <ul className="space-y-4 mb-8 flex-1">
+              <li className={`flex items-center gap-3 ${priceCardMuted}`}><Check className="w-5 h-5 text-emerald-500" /> 1 scan per day</li>
+              <li className={`flex items-center gap-3 ${priceCardMuted}`}><Check className="w-5 h-5 text-emerald-500" /> Full text analysis</li>
+              <li className={`flex items-center gap-3 ${priceCardDim}`}><X className="w-5 h-5" /> Unlimited scans</li>
+              <li className={`flex items-center gap-3 ${priceCardDim}`}><X className="w-5 h-5" /> PDF reports</li>
+            </ul>
+            <button 
+              onClick={() => setView('dashboard')}
+              className={`w-full py-3 rounded-xl border font-medium transition-colors ${priceBorderBtn}`}
+            >
+              Use Free
+            </button>
           </div>
-          <h3 className={`text-xl font-bold mb-2 flex items-center gap-2 ${textPrimary}`}>
-            <Check className="w-5 h-5 text-emerald-500" aria-hidden /> Pro Shield
-          </h3>
-          <div className={`text-4xl font-bold mb-6 ${textPrimary}`}>$9<span className={`text-lg font-normal ${priceCardDim}`}>/mo</span></div>
-          <p className={`${textMuted} mb-8`}>Complete protection for you and your family.</p>
-          <ul className="space-y-4 mb-8 flex-1">
-            <li className={`flex items-center gap-3 ${textPrimary}`}><Check className="w-5 h-5 text-emerald-500" /> Unlimited Scans</li>
-            <li className={`flex items-center gap-3 ${textPrimary}`}><Check className="w-5 h-5 text-emerald-500" /> Advanced Image Analysis</li>
-            <li className={`flex items-center gap-3 ${textPrimary}`}><Check className="w-5 h-5 text-emerald-500" /> Save Scan History</li>
-            <li className={`flex items-center gap-3 ${textPrimary}`}><Check className="w-5 h-5 text-emerald-500" /> 24/7 Priority API Access</li>
-          </ul>
-          <button 
-            onClick={() => setView('dashboard')}
-            className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold transition-colors shadow-lg shadow-emerald-500/25"
-          >
-            Go to Scanner
-          </button>
-        </div>
 
-        <div className={`${cardBg} border rounded-3xl p-8 flex flex-col ${cardBorder}`}>
-          <h3 className={`text-xl font-bold mb-2 ${textPrimary}`}>Lifetime</h3>
-          <div className={`text-4xl font-bold mb-6 ${textPrimary}`}>$99<span className={`text-lg font-normal ${priceCardDim}`}>/once</span></div>
-          <p className={`${textMuted} mb-8`}>Pay once, own it forever.</p>
-          <ul className="space-y-4 mb-8 flex-1">
-            <li className={`flex items-center gap-3 ${priceCardMuted}`}><Check className="w-5 h-5 text-emerald-500" /> Everything in Pro</li>
-            <li className={`flex items-center gap-3 ${priceCardMuted}`}><Check className="w-5 h-5 text-emerald-500" /> Early Access to New Features</li>
-            <li className={`flex items-center gap-3 ${priceCardMuted}`}><Check className="w-5 h-5 text-emerald-500" /> No Monthly Fees</li>
-          </ul>
-          <button 
-             onClick={() => setView('dashboard')}
-             className={`w-full py-3 rounded-xl border font-medium transition-colors ${priceBorderBtn}`}
-          >
-            Go to Scanner
-          </button>
+          <div className={`${cardBg} border-2 border-emerald-500 rounded-3xl p-8 flex flex-col relative shadow-2xl shadow-emerald-500/10 ${isDark ? '' : 'bg-emerald-50/50'}`}>
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-emerald-500 text-slate-900 px-4 py-1 rounded-full text-sm font-bold">
+              Pro
+            </div>
+            <h3 className={`text-xl font-bold mb-2 flex items-center gap-2 ${textPrimary}`}>
+              <Check className="w-5 h-5 text-emerald-500" aria-hidden /> Pro
+            </h3>
+            <div className={`text-4xl font-bold mb-6 ${textPrimary}`}>$8.99<span className={`text-lg font-normal ${priceCardDim}`}>/mo</span></div>
+            <p className={`${textMuted} mb-8`}>Unlimited scans. Cancel anytime.</p>
+            <ul className="space-y-4 mb-8 flex-1">
+              <li className={`flex items-center gap-3 ${textPrimary}`}><Check className="w-5 h-5 text-emerald-500" /> Unlimited scans</li>
+              <li className={`flex items-center gap-3 ${textPrimary}`}><Check className="w-5 h-5 text-emerald-500" /> Full analysis & history</li>
+              <li className={`flex items-center gap-3 ${textPrimary}`}><Check className="w-5 h-5 text-emerald-500" /> PDF reports</li>
+              <li className={`flex items-center gap-3 ${textPrimary}`}><Check className="w-5 h-5 text-emerald-500" /> Billed monthly</li>
+            </ul>
+            {isPro ? (
+              <div className={`w-full py-3 rounded-xl text-center font-medium ${textMuted}`}>You're on Pro</div>
+            ) : (
+              <button 
+                onClick={handleSubscribePro}
+                disabled={checkoutLoading}
+                className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold transition-colors shadow-lg shadow-emerald-500/25 disabled:opacity-70"
+              >
+                {checkoutLoading ? 'Loading…' : user ? 'Subscribe — $8.99/mo' : 'Sign in to subscribe'}
+              </button>
+            )}
+          </div>
         </div>
-
-        <div className={`${cardBg} border rounded-3xl p-8 flex flex-col ${cardBorder}`}>
-          <h3 className={`text-xl font-bold mb-2 flex items-center gap-2 ${textPrimary}`}>
-            <Users className="w-5 h-5 text-emerald-500" /> Family
-          </h3>
-          <div className={`text-4xl font-bold mb-6 ${textPrimary}`}>$14<span className={`text-lg font-normal ${priceCardDim}`}>/mo</span></div>
-          <p className={`${textMuted} mb-8`}>Protect your whole household. Up to 6 members.</p>
-          <ul className="space-y-4 mb-8 flex-1">
-            <li className={`flex items-center gap-3 ${priceCardMuted}`}><Check className="w-5 h-5 text-emerald-500" /> Everything in Pro</li>
-            <li className={`flex items-center gap-3 ${priceCardMuted}`}><Check className="w-5 h-5 text-emerald-500" /> Up to 6 family members</li>
-            <li className={`flex items-center gap-3 ${priceCardMuted}`}><Check className="w-5 h-5 text-emerald-500" /> Shared scan history &amp; alerts</li>
-          </ul>
-          <button 
-             onClick={() => setView('dashboard')}
-             className={`w-full py-3 rounded-xl border font-medium transition-colors ${priceBorderBtn}`}
-          >
-            Go to Scanner
-          </button>
-        </div>
-      </div>
       </div>
     </div>
   );
 
-  const scansUsed = getScansUsedToday(GUEST_USER_ID);
-  const canScan = canScanToday(GUEST_USER_ID, false);
+  const scansUsed = getScansUsedToday(userId);
+  const canScan = canScanToday(userId, isPro);
 
   const dashboardMuted = isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900';
   const amberText = isDark ? 'text-amber-200' : 'text-amber-800';
@@ -462,7 +485,7 @@ export default function ScamShieldApp() {
                 </button>
                 <ReportActions
                   entry={historyEntry || (result ? { id: '', date: new Date().toISOString(), snippet: inputText.slice(0, 200), risk_score: result.risk_score, risk_level: result.risk_level, scam_type: result.scam_type, fullResult: result } : null)}
-                  isProOrLifetime={true}
+                  isProOrLifetime={isPro}
                   isDark={isDark}
                 />
               </div>
@@ -677,7 +700,7 @@ export default function ScamShieldApp() {
               {currentView === 'dashboard' && <DashboardView />}
               {currentView === 'history' && (
                 <ScanHistory
-                  userEmail={GUEST_USER_ID}
+                  userEmail={userId}
                   onBack={() => setView('dashboard')}
                   onSelectEntry={(entry) => {
                     setHistoryEntry(entry);

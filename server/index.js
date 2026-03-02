@@ -2,10 +2,34 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
+import Stripe from 'stripe';
 
 const app = express();
+// Stripe webhook needs raw body for signature verification
+app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: '100kb' }));
+
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID;
+const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
+
+async function setClerkUserPlan(userId, plan) {
+  if (!CLERK_SECRET_KEY || !userId) return;
+  try {
+    await fetch(`https://api.clerk.com/v1/users/${userId}/metadata`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${CLERK_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ public_metadata: { plan: plan || null } }),
+    });
+  } catch (e) {
+    console.error('Clerk metadata update failed:', e);
+  }
+}
 
 const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -136,8 +160,80 @@ app.post('/api/analyze', async (req, res) => {
   }
 });
 
+// Create Stripe Checkout session for Pro subscription (requires auth)
+app.post('/api/create-checkout-session', async (req, res) => {
+  if (!CLERK_SECRET_KEY) {
+    return res.status(503).json({ error: 'Auth is not configured.' });
+  }
+  if (!stripe || !STRIPE_PRICE_ID) {
+    return res.status(503).json({ error: 'Billing is not configured.' });
+  }
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!token) {
+    return res.status(401).json({ error: 'Sign in required to subscribe.' });
+  }
+  let userId;
+  try {
+    const { verifyToken } = await import('@clerk/backend');
+    const payload = await verifyToken(token, { secretKey: CLERK_SECRET_KEY });
+    userId = payload?.sub;
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid or expired session.' });
+  }
+  if (!userId) {
+    return res.status(401).json({ error: 'Sign in required.' });
+  }
+  const origin = req.headers.origin || req.headers.referer || 'http://localhost:5173';
+  const base = origin.replace(/\/$/, '');
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      line_items: [{ price: STRIPE_PRICE_ID, quantity: 1 }],
+      success_url: `${base}/dashboard?subscription=success`,
+      cancel_url: `${base}/pricing`,
+      client_reference_id: userId,
+      subscription_data: { metadata: { clerk_user_id: userId } },
+    });
+    res.json({ url: session.url });
+  } catch (e) {
+    console.error('Stripe checkout error:', e);
+    res.status(500).json({ error: e.message || 'Failed to create checkout session.' });
+  }
+});
+
+// Stripe webhook: update Clerk user plan on subscription lifecycle
+app.post('/api/webhooks/stripe', (req, res) => {
+  if (!stripe || !STRIPE_WEBHOOK_SECRET) {
+    return res.status(503).send('Webhook not configured');
+  }
+  const sig = req.headers['stripe-signature'];
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
+  } catch (e) {
+    return res.status(400).send(`Webhook signature verification failed: ${e.message}`);
+  }
+  (async () => {
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      const userId = session.client_reference_id;
+      if (userId) await setClerkUserPlan(userId, 'pro');
+    } else if (event.type === 'customer.subscription.deleted' || event.type === 'customer.subscription.updated') {
+      const sub = event.data.object;
+      const userId = sub.metadata?.clerk_user_id;
+      if (userId) {
+        const isActive = sub.status === 'active' || sub.status === 'trialing';
+        await setClerkUserPlan(userId, isActive ? 'pro' : null);
+      }
+    }
+  })().catch((e) => console.error('Webhook handler error:', e));
+  res.sendStatus(200);
+});
+
 const PORT = Number(process.env.PORT) || 3001;
 app.listen(PORT, () => {
   console.log(`ScamShield API running at http://localhost:${PORT}`);
   if (!openai) console.warn('Warning: OPENAI_API_KEY not set. Set it in .env to enable analysis.');
+  if (!stripe) console.warn('Warning: STRIPE_SECRET_KEY not set. Billing disabled.');
 });
