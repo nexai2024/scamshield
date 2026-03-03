@@ -1,0 +1,27 @@
+1:"$Sreact.fragment"
+3:I[1959,[],"ClientPageRoot"]
+4:I[2519,["595","static/chunks/595-bc11df21e052e364.js","974","static/chunks/app/page-8dcaaf22dccd100b.js"],"default"]
+7:I[4431,[],"OutletBoundary"]
+9:I[5278,[],"AsyncMetadataOutlet"]
+b:I[4431,[],"ViewportBoundary"]
+d:I[4431,[],"MetadataBoundary"]
+e:"$Sreact.suspense"
+10:I[7150,[],""]
+:HL["/_next/static/css/a47f86ad6b85e723.css","style"]
+0:{"P":null,"b":"1gf91dW4nNsoDcGA11Qqy","p":"","c":["",""],"i":false,"f":[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/a47f86ad6b85e723.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],"$L2"]}],{"children":["__PAGE__",["$","$1","c",{"children":[["$","$L3",null,{"Component":"$4","searchParams":{},"params":{},"promises":["$@5","$@6"]}],null,["$","$L7",null,{"children":["$L8",["$","$L9",null,{"promise":"$@a"}]]}]]}],{},null,false]},null,false],["$","$1","h",{"children":[null,[["$","$Lb",null,{"children":"$Lc"}],null],["$","$Ld",null,{"children":["$","div",null,{"hidden":true,"children":["$","$e",null,{"fallback":null,"children":"$Lf"}]}]}]]}],false]],"m":"$undefined","G":["$10",[]],"s":false,"S":true}
+5:{}
+6:"$0:f:0:1:2:children:1:props:children:0:props:params"
+11:I[5881,["595","static/chunks/595-bc11df21e052e364.js","462","static/chunks/462-baab8c4ffbef2796.js","270","static/chunks/270-8cdca504a50b140c.js","177","static/chunks/app/layout-749225646e7f650a.js"],"ClientClerkProvider"]
+12:I[4569,["595","static/chunks/595-bc11df21e052e364.js","462","static/chunks/462-baab8c4ffbef2796.js","270","static/chunks/270-8cdca504a50b140c.js","177","static/chunks/app/layout-749225646e7f650a.js"],"ToastProvider"]
+13:I[6470,["595","static/chunks/595-bc11df21e052e364.js","462","static/chunks/462-baab8c4ffbef2796.js","270","static/chunks/270-8cdca504a50b140c.js","177","static/chunks/app/layout-749225646e7f650a.js"],"TourProvider"]
+14:I[6239,["595","static/chunks/595-bc11df21e052e364.js","462","static/chunks/462-baab8c4ffbef2796.js","270","static/chunks/270-8cdca504a50b140c.js","177","static/chunks/app/layout-749225646e7f650a.js"],"AppShell"]
+15:I[9766,[],""]
+16:I[8924,[],""]
+17:I[3453,["595","static/chunks/595-bc11df21e052e364.js","345","static/chunks/app/not-found-107a312de94a94d5.js"],"default"]
+18:I[1660,["595","static/chunks/595-bc11df21e052e364.js","462","static/chunks/462-baab8c4ffbef2796.js","270","static/chunks/270-8cdca504a50b140c.js","177","static/chunks/app/layout-749225646e7f650a.js"],"ToastContainer"]
+19:I[272,["595","static/chunks/595-bc11df21e052e364.js","462","static/chunks/462-baab8c4ffbef2796.js","270","static/chunks/270-8cdca504a50b140c.js","177","static/chunks/app/layout-749225646e7f650a.js"],"TourOverlay"]
+2:["$","$L11",null,{"publishableKey":"pk_test_Y29uY2lzZS1zdGFybGluZy05LmNsZXJrLmFjY291bnRzLmRldiQ","clerkJSUrl":"$undefined","clerkJSVersion":"$undefined","proxyUrl":"","domain":"","isSatellite":false,"signInUrl":"","signUpUrl":"","signInForceRedirectUrl":"","signUpForceRedirectUrl":"","signInFallbackRedirectUrl":"","signUpFallbackRedirectUrl":"","afterSignInUrl":"","afterSignUpUrl":"","newSubscriptionRedirectUrl":"","telemetry":{"disabled":false,"debug":false},"sdkMetadata":{"name":"@clerk/nextjs","version":"6.39.0","environment":"production"},"nonce":"","initialState":null,"children":["$","$L12",null,{"children":["$","$L13",null,{"children":["$","html",null,{"lang":"en","suppressHydrationWarning":true,"children":["$","body",null,{"className":"antialiased min-h-screen bg-slate-950 text-slate-100","children":[["$","$L14",null,{"children":["$","$L15",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L16",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[["$","$L17",null,{}],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}],["$","$L18",null,{}],["$","$L19",null,{}]]}]}]}]}]}]
+c:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+8:null
+a:{"metadata":[["$","title","0",{"children":"ScamShield – AI scam & fraud detection"}],["$","meta","1",{"name":"description","content":"Paste any message to get an instant risk score and clear next steps."}]],"error":null,"digest":"$undefined"}
+f:"$a:metadata"

@@ -1,0 +1,10 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/api/analyze/route": "/api/analyze",
+  "/api/create-checkout-session/route": "/api/create-checkout-session",
+  "/api/webhooks/stripe/route": "/api/webhooks/stripe",
+  "/history/page": "/history",
+  "/page": "/",
+  "/pricing/page": "/pricing",
+  "/dashboard/page": "/dashboard"
+}

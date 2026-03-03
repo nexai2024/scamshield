@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -30,7 +30,7 @@ import type { AnalysisResult } from '@/lib/types';
 
 const VIEW_ENTRY_KEY = 'scamshield_view_entry';
 
-export default function DashboardPage() {
+function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useUser();
@@ -283,5 +283,13 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[40vh] flex items-center justify-center text-slate-400">Loading...</div>}>
+      <DashboardContent />
+    </Suspense>
   );
 }
