@@ -1,101 +1,63 @@
 # ScamShield
 
-AI-powered scam and fraud detection for messages, emails, and texts. Analysis is powered by OpenAI.
+AI-powered scam and fraud detection for messages, emails, and texts. Built with **Next.js (App Router)** and TypeScript. Analysis is powered by OpenAI; auth and billing use Clerk and Stripe.
 
-## Running the app (with OpenAI analysis)
+## Stack
 
-1. **Install dependencies:** `npm install`
+- **Next.js 15** (App Router), **TypeScript**, **Tailwind CSS**
+- **Clerk** – sign-in, sign-up, user metadata (Pro plan)
+- **Stripe** – Pro subscription ($8.99/mo) and webhooks
+- **OpenAI** – scam analysis API
 
-2. **Set your OpenAI API key:** Copy `.env.example` to `.env` and add your key:
+## Setup
+
+1. **Install dependencies**
+
    ```bash
-   cp .env.example .env
-   # Edit .env and set OPENAI_API_KEY=sk-...
+   npm install
    ```
-   Get a key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).  
-   **Security:** Never commit `.env` or real API keys. If a key was ever committed, rotate it (revoke and create a new one) at OpenAI immediately.
 
-3. **Run the API server and the frontend:**
+2. **Environment variables**
+
+   Copy `.env.example` to `.env.local` and fill in values:
+
+   - `OPENAI_API_KEY` – required for `/api/analyze` ([OpenAI API keys](https://platform.openai.com/api-keys))
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` – [Clerk](https://dashboard.clerk.com) (required for auth and for `npm run build` to succeed)
+   - `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` – [Stripe](https://dashboard.stripe.com) (for Pro checkout and webhook)
+   - `NEXT_PUBLIC_APP_URL` – app URL (e.g. `http://localhost:3000`); used for Stripe redirects
+
+   If you used the previous Vite app, rename `VITE_CLERK_PUBLISHABLE_KEY` to `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
+
+3. **Run the app**
+
    ```bash
-   npm run dev:all
+   npm run dev
    ```
-   Or in two terminals:
-   - `npm run server` (API on http://localhost:3001)
-   - `npm run dev` (Vite on http://localhost:5173, proxies `/api` to the server)
 
-4. Open http://localhost:5173 and use the scanner. Analysis runs through the backend and OpenAI.
+   Open [http://localhost:3000](http://localhost:3000). Use the Scanner, Pricing, and History from the nav.
 
----
+## Scripts
 
-# React + TypeScript + Vite
+- `npm run dev` – start Next.js dev server
+- `npm run build` – production build (requires `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` in env)
+- `npm run start` – run production server
+- `npm run lint` – run ESLint
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Routes
 
-Currently, two official plugins are available:
+- `/` – landing
+- `/pricing` – pricing (Free / Pro)
+- `/dashboard` – scanner and analysis result
+- `/history` – scan history (per-user, local storage)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## API (App Router)
 
-## React Compiler
+- `POST /api/analyze` – body `{ "text": "..." }` → returns risk score, level, red flags, advice.
+- `POST /api/create-checkout-session` – creates Stripe Checkout session (requires Clerk auth).
+- `POST /api/webhooks/stripe` – Stripe webhook; updates Clerk `publicMetadata.plan` on subscription events.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Configure Stripe webhook URL to `https://your-domain/api/webhooks/stripe` and use the raw body for signature verification.
 
-## Expanding the ESLint configuration
+## Security
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Do not commit `.env` or `.env.local`. Rotate any keys that were ever committed.

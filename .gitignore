@@ -25,3 +25,5 @@ dist-ssr
 
 # Never commit secrets. Use .env for local keys (see .env.example).
 .env
+# clerk configuration (can include secrets)
+/.clerk/
