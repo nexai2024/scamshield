@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
 import { ShieldCheck, Settings } from 'lucide-react';
@@ -45,7 +46,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="px-4 h-16 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 rounded-lg hover:opacity-90 transition-opacity" aria-label="Go to home">
               <div className="bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
-                <ShieldCheck className="w-6 h-6 text-emerald-500" />
+                
+                <Image src="/logo-scamshield.png" alt="ScamShield" width={32} height={32} />  
+                
+                
+
               </div>
               <span className={`text-xl font-bold tracking-tight ${navLinkActive}`}>Scam<span className="text-emerald-500">Shield</span></span>
             </Link>

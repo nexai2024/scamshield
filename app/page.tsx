@@ -39,14 +39,14 @@ export default function LandingPage() {
           <div className="flex flex-col items-center gap-6 mb-8">
             <div className="relative animate-float will-change-transform">
               <div className="absolute -inset-4 rounded-2xl bg-emerald-500/5 blur-xl" aria-hidden />
-              <Image
+              {/* <Image
                 src="/logo-scamshield.png"
                 alt="Scam Shield"
                 width={160}
                 height={120}
                 className="relative w-32 h-auto md:w-40 drop-shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
                 priority
-              />
+              /> */}
             </div>
             <div className={`glass-panel inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-glass transition-all duration-300 ${isDark ? 'text-blue-300' : 'text-blue-600'}`}>
               <Lock className="w-3.5 h-3.5" /> AI-Powered Fraud Detection
