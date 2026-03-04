@@ -1,4 +1,4 @@
-'use client';
+/* 'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -97,4 +97,10 @@ export default function PricingPage() {
       </div>
     </div>
   );
+}
+ */
+import { PricingTable } from '@clerk/nextjs'
+
+export default function PricingPage() {
+  return <PricingTable />
 }
