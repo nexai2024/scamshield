@@ -1,10 +1,10 @@
 {
-  "/api/analyze/route": "app/api/analyze/route.js",
-  "/api/webhooks/stripe/route": "app/api/webhooks/stripe/route.js",
-  "/api/create-checkout-session/route": "app/api/create-checkout-session/route.js",
   "/_not-found/page": "app/_not-found/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
+  "/api/analyze/route": "app/api/analyze/route.js",
+  "/api/create-checkout-session/route": "app/api/create-checkout-session/route.js",
+  "/api/webhooks/stripe/route": "app/api/webhooks/stripe/route.js",
   "/history/page": "app/history/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/page": "app/page.js",
   "/pricing/page": "app/pricing/page.js"
 }

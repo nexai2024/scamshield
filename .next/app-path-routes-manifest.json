@@ -1,10 +1,10 @@
 {
-  "/api/analyze/route": "/api/analyze",
-  "/api/webhooks/stripe/route": "/api/webhooks/stripe",
-  "/api/create-checkout-session/route": "/api/create-checkout-session",
   "/_not-found/page": "/_not-found",
-  "/dashboard/page": "/dashboard",
+  "/api/analyze/route": "/api/analyze",
+  "/api/create-checkout-session/route": "/api/create-checkout-session",
+  "/api/webhooks/stripe/route": "/api/webhooks/stripe",
   "/history/page": "/history",
+  "/dashboard/page": "/dashboard",
   "/page": "/",
   "/pricing/page": "/pricing"
 }
