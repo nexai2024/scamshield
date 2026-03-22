@@ -7,5 +7,6 @@ const nextConfig: NextConfig = {
       allowedOrigins: ["psychic-carnival-5g5rqvpxxv6434qr-3000.app.github.dev", "localhost:3000"],
     },
 
-?
-"?:>;?">?    export default nextConfig;
+}};
+
+export default nextConfig;
