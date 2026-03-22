@@ -57,6 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <nav className="flex items-center gap-4 sm:gap-6">
               <Link href="/dashboard" className={`text-sm font-medium transition-colors ${pathname === '/dashboard' ? navLinkActive : navLinkInactive}`}>Scanner</Link>
               <Link href="/history" className={`text-sm font-medium transition-colors ${pathname === '/history' ? navLinkActive : navLinkInactive}`}>History</Link>
+              <Link href="/community" className={`text-sm font-medium transition-colors ${pathname === '/community' ? navLinkActive : navLinkInactive}`}>Community</Link>
               <Link href="/pricing" className={`text-sm font-medium transition-colors hidden sm:block ${pathname === '/pricing' ? navLinkActive : navLinkInactive}`}>Pricing</Link>
               <Tooltip label="Settings">
                 <button type="button" onClick={() => setShowSettings(true)} className={`p-2 rounded-full transition-colors ${navLinkInactive} ${navHoverBg}`} aria-label="Settings">

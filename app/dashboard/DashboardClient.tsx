@@ -11,6 +11,7 @@ import {
   X,
   Copy,
   AlertOctagon,
+  ShieldCheck,
 } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { Breadcrumbs, breadcrumbIcons } from '@/components/Breadcrumbs';
@@ -24,6 +25,7 @@ import { CONTENT_MAX_W } from '@/lib/constants';
 import { GUEST_USER_ID } from '@/lib/constants';
 import { canScanToday, getScansUsedToday, incrementScansToday, FREE_DAILY_LIMIT_CONST } from '@/lib/utils/freeTier';
 import { addScan } from '@/lib/utils/scanHistory';
+import { addCommunityPost } from '@/lib/utils/communityPosts';
 import { getStoredTheme, getEffectiveTheme } from '@/lib/utils/theme';
 import { sampleScans } from '@/lib/data/sampleScans';
 import type { AnalysisResult } from '@/lib/types';
@@ -154,9 +156,14 @@ export default function DashboardClient() {
               </button>
               <ReportActions entry={historyEntry || { id: '', date: new Date().toISOString(), snippet: inputText.slice(0, 200), risk_score: result.risk_score, risk_level: result.risk_level, scam_type: result.scam_type, fullResult: result }} isProOrLifetime={isPro} isDark={isDark} />
             </div>
-            <button type="button" onClick={() => { navigator.clipboard.writeText('ScamShield Risk: ' + result.risk_level); toast.showToast('Copied!'); }} className="flex items-center gap-2 text-emerald-500 hover:text-emerald-600 font-medium">
-              <Copy className="w-4 h-4" /> Share Verdict
-            </button>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => { addCommunityPost({ id: `${Date.now()}-${Math.random().toString(16).slice(2)}`, date: new Date().toISOString(), text: `${inputText.trim() || '[Scanned snippet]'}\n\nRisk: ${result.risk_level} (${result.risk_score})\nType: ${result.scam_type}`, risk_score: result.risk_score, risk_level: result.risk_level, scam_type: result.scam_type }); toast.showToast('Posted to community reports.'); }} className="flex items-center gap-2 text-blue-500 hover:text-blue-600 font-medium">
+                <ShieldCheck className="w-4 h-4" /> Post to Community
+              </button>
+              <button type="button" onClick={() => { navigator.clipboard.writeText('ScamShield Risk: ' + result.risk_level); toast.showToast('Copied!'); }} className="flex items-center gap-2 text-emerald-500 hover:text-emerald-600 font-medium">
+                <Copy className="w-4 h-4" /> Share Verdict
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
@@ -201,6 +208,41 @@ export default function DashboardClient() {
                   </div>
                 </div>
               )}
+
+              {result.entities && (
+                <div className={`${cardBg} border rounded-2xl p-6 ${cardBorder}`}>
+                  <h3 className={`${textMuted} text-xs font-bold uppercase tracking-wider mb-3`}>Entity Recognition + Search Validation</h3>
+                  <p className="text-sm text-slate-500 mb-4">Detected names, emails, phones, addresses, businesses, or nonprofits with suggested verification search terms.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {(['names', 'emails', 'phones', 'addresses', 'businesses', 'nonprofits'] as const).map((field) => {
+                      const values = result.entities?.[field] ?? [];
+                      return (
+                        <div key={field}>
+                          <div className="font-semibold capitalize mb-1">{field} ({values.length})</div>
+                          {values.length > 0 ? (
+                            <ul className="list-disc ml-5 space-y-1">
+                              {values.map((item, idx) => <li key={idx} className="break-words">{item}</li>)}
+                            </ul>
+                          ) : (
+                            <div className="text-slate-500">None found.</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-4">
+                    <div className="font-semibold">Validation search hints</div>
+                    {result.entities.validation_hints && result.entities.validation_hints.length > 0 ? (
+                      <ul className="list-disc ml-5 mt-1 space-y-1">
+                        {result.entities.validation_hints.map((hint, idx) => <li key={idx} className="break-words">{hint}</li>)}
+                      </ul>
+                    ) : (
+                      <div className="text-slate-500">No validation hints provided.</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className={`${cardBg} border rounded-2xl p-6 ${cardBorder} ${isDark ? 'bg-gradient-to-r from-slate-900 to-slate-800 border-slate-700' : 'border-slate-200'}`}>
                 <div className="flex items-center gap-2 mb-4">
                   <AlertOctagon className="w-5 h-5 text-red-500" />

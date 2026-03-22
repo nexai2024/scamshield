@@ -21,6 +21,11 @@ function parseJsonFromResponse(content: string | null): Record<string, unknown> 
   }
 }
 
+function filterStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item) => typeof item === 'string');
+}
+
 function normalizeResult(parsed: Record<string, unknown> | null) {
   if (!parsed || typeof parsed !== 'object') return null;
   const score = clampScore((parsed.risk_score as number) ?? 0);
@@ -32,6 +37,9 @@ function normalizeResult(parsed: Record<string, unknown> | null) {
     else if (score >= 20) level = 'Low Risk';
     else level = 'Safe';
   }
+
+  const rawEntities = typeof parsed.entities === 'object' && parsed.entities !== null ? (parsed.entities as Record<string, unknown>) : {};
+
   return {
     risk_score: score,
     risk_level: level,
@@ -51,11 +59,20 @@ function normalizeResult(parsed: Record<string, unknown> | null) {
     triggered_phrases: Array.isArray(parsed.triggered_phrases)
       ? (parsed.triggered_phrases as string[]).filter((p) => typeof p === 'string')
       : undefined,
+    entities: {
+      names: filterStringArray(rawEntities.names),
+      emails: filterStringArray(rawEntities.emails),
+      phones: filterStringArray(rawEntities.phones),
+      addresses: filterStringArray(rawEntities.addresses),
+      businesses: filterStringArray(rawEntities.businesses),
+      nonprofits: filterStringArray(rawEntities.nonprofits),
+      validation_hints: filterStringArray(rawEntities.validation_hints),
+    },
   };
 }
 
 const SYSTEM_PROMPT =
-  'You are a scam and fraud detection expert. Analyze the user message for signs of fraud, phishing, romance scams, impersonation, or other scams. Respond with a single JSON object only, no other text. Use this exact structure: {"risk_score": <number 0-100>, "risk_level": "<Safe | Low Risk | Medium Risk | High Risk | Critical>", "scam_type": "<short label>", "red_flags": ["list of specific red flags"], "verdict_summary": "<2-4 sentence summary>", "advice": "<1-3 sentences: what to do next>", "why_risky": "<optional 2-4 sentences>", "triggered_phrases": ["exact phrases from message"]}. Rules: risk_score 0-100; be specific in red_flags; if legitimate set risk_score low. Output only valid JSON.';
+  'You are a scam and fraud detection expert. Analyze the user message for signs of fraud, phishing, romance scams, impersonation, or other scams. Respond with a single JSON object only, no other text. Use this exact structure: {"risk_score": <number 0-100>, "risk_level": "<Safe | Low Risk | Medium Risk | High Risk | Critical>", "scam_type": "<short label>", "red_flags": ["list of specific red flags"], "verdict_summary": "<2-4 sentence summary>", "advice": "<1-3 sentences: what to do next>", "why_risky": "<optional 2-4 sentences>", "triggered_phrases": ["exact phrases from message"], "entities": {"names": ["..."], "emails": ["..."], "phones": ["..."], "addresses": ["..."], "businesses": ["..."], "nonprofits": ["..."], "validation_hints": ["quick search query or phrase to verify each entity"]}}. Rules: risk_score 0-100; be specific in red_flags; if legitimate set risk_score low; include empty arrays if no values are found. For each extracted entity generate a brief validation hint that could be used in an internet search (Google/Bing). Output only valid JSON.';
 
 export async function POST(request: Request) {
   const openai = process.env.OPENAI_API_KEY
