@@ -1,10 +1,11 @@
-export type EntityKind = 'email' | 'phone' | 'place' | 'properName';
+export type EntityKind = 'email' | 'phone' | 'place' | 'properName' | 'url';
 
 export interface ExtractedEntities {
   emails: string[];
   phones: string[];
   places: string[];
   properNames: string[];
+  urls: string[];
 }
 
 export interface EntityValidationResult {

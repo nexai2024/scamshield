@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
+import { useSubscription } from '@clerk/nextjs/experimental';
 import { Breadcrumbs, breadcrumbIcons } from '@/components/Breadcrumbs';
 import { ReportActions } from '@/components/ReportActions';
 import { ScamAlerts } from '@/components/ScamAlerts';
@@ -24,6 +25,7 @@ import { useTour } from '@/context/TourContext';
 import { CONTENT_MAX_W } from '@/lib/constants';
 import { GUEST_USER_ID } from '@/lib/constants';
 import { canScanToday, getScansUsedToday, incrementScansToday, FREE_DAILY_LIMIT_CONST } from '@/lib/utils/freeTier';
+import { hasProAccess } from '@/lib/utils/subscription';
 import { addScan } from '@/lib/utils/scanHistory';
 import { addCommunityPost } from '@/lib/utils/communityPosts';
 import { getStoredTheme, getEffectiveTheme } from '@/lib/utils/theme';
@@ -36,11 +38,12 @@ export default function DashboardClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useUser();
+  const { data: clerkSubscription, revalidate: revalidateClerkSubscription } = useSubscription({ for: 'user' });
   const toast = useToast();
   const { hasCompletedTour, startTour } = useTour();
 
   const userId = user?.id ?? GUEST_USER_ID;
-  const isPro = (user?.publicMetadata as { plan?: string } | undefined)?.plan === 'pro';
+  const isPro = hasProAccess(user, clerkSubscription ?? null);
 
   const [inputText, setInputText] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
@@ -70,11 +73,18 @@ export default function DashboardClient() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (searchParams.get('subscription') === 'success') {
+    if (searchParams.get('subscription') !== 'success' || !user) return;
+    void (async () => {
+      try {
+        await user.reload();
+      } catch {
+        // still try to refresh billing snapshot
+      }
+      await revalidateClerkSubscription();
       toast.showToast('Welcome to Pro! You have unlimited scans.');
       window.history.replaceState({}, '', '/dashboard');
-    }
-  }, [searchParams, toast]);
+    })();
+  }, [searchParams, toast, user, revalidateClerkSubscription]);
 
   useEffect(() => {
     try {
@@ -113,7 +123,7 @@ export default function DashboardClient() {
       setResult(data as AnalysisResult);
       const entry = addScan(userId, textToAnalyze.slice(0, 200), data as AnalysisResult);
       setHistoryEntry(entry);
-      incrementScansToday(userId);
+      if (!isPro) incrementScansToday(userId);
     } catch {
       toast.showToast('Failed to connect to the analysis service.', 'error');
     } finally {

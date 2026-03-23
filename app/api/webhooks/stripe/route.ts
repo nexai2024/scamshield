@@ -47,15 +47,24 @@ export async function POST(request: Request) {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.client_reference_id;
       if (userId) await setClerkUserPlan(userId, 'pro');
-    } else if (
-      event.type === 'customer.subscription.deleted' ||
-      event.type === 'customer.subscription.updated'
-    ) {
+    } else if (event.type === 'customer.subscription.deleted') {
+      const sub = event.data.object as Stripe.Subscription;
+      const userId = sub.metadata?.clerk_user_id as string | undefined;
+      if (userId) await setClerkUserPlan(userId, null);
+    } else if (event.type === 'customer.subscription.updated') {
       const sub = event.data.object as Stripe.Subscription;
       const userId = sub.metadata?.clerk_user_id as string | undefined;
       if (userId) {
-        const isActive = sub.status === 'active' || sub.status === 'trialing';
-        await setClerkUserPlan(userId, isActive ? 'pro' : null);
+        if (sub.status === 'active' || sub.status === 'trialing') {
+          await setClerkUserPlan(userId, 'pro');
+        } else if (
+          sub.status === 'canceled' ||
+          sub.status === 'unpaid' ||
+          sub.status === 'incomplete_expired'
+        ) {
+          await setClerkUserPlan(userId, null);
+        }
+        // Do not clear Pro on `incomplete` / `past_due` — avoids racing checkout.session.completed.
       }
     }
   } catch (e) {

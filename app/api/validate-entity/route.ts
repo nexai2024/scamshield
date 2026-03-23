@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import type { EntityKind } from '@/lib/entities/types';
 import { validateEntity } from '@/lib/entities/validate';
 
-const KINDS: EntityKind[] = ['email', 'phone', 'place', 'properName'];
+const KINDS: EntityKind[] = ['email', 'phone', 'place', 'properName', 'url'];
 
 function isEntityKind(s: string): s is EntityKind {
   return (KINDS as string[]).includes(s);
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   const value = body?.value;
   if (typeof kind !== 'string' || !isEntityKind(kind)) {
     return NextResponse.json(
-      { error: 'kind must be one of: email, phone, place, properName.' },
+      { error: 'kind must be one of: email, phone, place, properName, url.' },
       { status: 400 }
     );
   }

@@ -2,6 +2,7 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import type { CountryCode } from 'libphonenumber-js';
 
 import type { EntityKind, EntityValidationResult } from './types';
+import { formatThreatSummary, runOptionalUrlThreatChecks } from './urlThreatChecks';
 
 const EMAIL_RE =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
@@ -10,7 +11,7 @@ const EMAIL_RE =
 export function validateProperName(value: string): EntityValidationResult {
   const trimmed = value.trim();
   if (!trimmed) {
-    return {valid: false, kind: 'properName', value, reason: 'Empty value.' };
+    return { valid: false, kind: 'properName', value, reason: 'Empty value.' };
   }
   if (trimmed.length < 2 || trimmed.length > 120) {
     return { valid: false, kind: 'properName', value, reason: 'Length should be between 2 and 120 characters.' };
@@ -73,6 +74,124 @@ export function validatePhoneNumber(
     value: trimmed,
     detail: parsed.formatInternational(),
   };
+}
+
+function normalizeUrlInput(value: string): string {
+  const t = value.trim();
+  if (!t) return t;
+  if (/^https?:\/\//i.test(t)) return t;
+  if (/^www\./i.test(t)) return `https://${t}`;
+  if (/^[a-z0-9][\w.-]*\.[a-z]{2,}(\/|$)/i.test(t)) return `https://${t}`;
+  return t;
+}
+
+/**
+ * Syntax check, optional Google Web Risk + PhishTank lookups, then HTTP HEAD reachability.
+ * Set `GOOGLE_WEB_RISK_API_KEY` and/or `PHISHTANK_APP_KEY` in the environment for threat feeds.
+ */
+export async function validateUrl(value: string): Promise<EntityValidationResult> {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return { valid: false, kind: 'url', value, reason: 'Empty value.' };
+  }
+
+  const toParse = normalizeUrlInput(trimmed);
+  let parsed: URL;
+  try {
+    parsed = new URL(toParse);
+  } catch {
+    return { valid: false, kind: 'url', value, reason: 'Not a valid URL.' };
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return { valid: false, kind: 'url', value, reason: 'Only http(s) URLs are supported.' };
+  }
+
+  const host = parsed.hostname;
+  if (!host || (!host.includes('.') && host !== 'localhost')) {
+    return { valid: false, kind: 'url', value, reason: 'Hostname looks invalid.' };
+  }
+
+  const href = parsed.href;
+
+  const threatParts = await runOptionalUrlThreatChecks(href);
+  const threatLine = formatThreatSummary(threatParts);
+  const threatHit = threatParts.some((p) => p.flagged);
+  if (threatHit) {
+    const hit = threatParts.find((p) => p.flagged);
+    const who = hit?.provider === 'google_web_risk' ? 'Google Web Risk' : 'PhishTank';
+    return {
+      valid: false,
+      kind: 'url',
+      value: trimmed,
+      reason: `${who} reported a threat. ${threatLine}`,
+    };
+  }
+
+  const controller = new AbortController();
+  const timeoutMs = 8000;
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  const tryHead = async (): Promise<Response | null> => {
+    try {
+      return await fetch(href, {
+        method: 'HEAD',
+        redirect: 'follow',
+        signal: controller.signal,
+        headers: { 'User-Agent': 'ScamShield/1.0 (url-validation)' },
+        cache: 'no-store',
+      });
+    } catch {
+      return null;
+    }
+  };
+
+  try {
+    const res = await tryHead();
+    clearTimeout(timer);
+
+    if (!res) {
+      return {
+        valid: false,
+        kind: 'url',
+        value: trimmed,
+        reason: `Could not reach URL (network, timeout, or TLS error). ${threatLine}`,
+      };
+    }
+
+    if (res.status === 405 || res.status === 501) {
+      return {
+        valid: true,
+        kind: 'url',
+        value: trimmed,
+        detail: `Syntax valid; server declined HEAD (reachability not fully verified). ${threatLine}`,
+      };
+    }
+
+    if (res.status >= 200 && res.status < 400) {
+      return {
+        valid: true,
+        kind: 'url',
+        value: trimmed,
+        detail: `Reachable (HTTP ${res.status}). ${threatLine}`,
+      };
+    }
+
+    return {
+      valid: false,
+      kind: 'url',
+      value: trimmed,
+      reason: `HTTP ${res.status} when checking URL. ${threatLine}`,
+    };
+  } catch {
+    clearTimeout(timer);
+    return {
+      valid: false,
+      kind: 'url',
+      value: trimmed,
+      reason: `Request failed or timed out. ${threatLine}`,
+    };
+  }
 }
 
 const NOMINATIM_SEARCH = 'https://nominatim.openstreetmap.org/search';
@@ -149,5 +268,7 @@ export async function validateEntity(
       return validateProperName(value);
     case 'place':
       return validatePlaceExists(value);
+    case 'url':
+      return validateUrl(value);
   }
 }

@@ -27,6 +27,13 @@ const PLACE_AFTER_PREP_RE =
 /** Multi-word title-case sequences (possible people or organizations) */
 const TITLE_RUN_RE = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b/g;
 
+/** http(s) and www. candidates; trailing punctuation trimmed */
+const URL_RE = /\bhttps?:\/\/[^\s<>"'[\]()]+|\bwww\.[^\s<>"'[\]()]+/gi;
+
+function trimTrailingUrlPunctuation(s: string): string {
+  return s.replace(/[),.;:!?'"\]]+$/g, '');
+}
+
 function dedupe(candidates: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -48,12 +55,25 @@ function tokensAreMostlyStopwords(phrase: string): boolean {
   return stop.length === parts.length;
 }
 
+function extractUrlsFromText(text: string): string[] {
+  const raw = text.match(URL_RE) ?? [];
+  const normalized: string[] = [];
+  for (let u of raw) {
+    u = trimTrailingUrlPunctuation(u.trim());
+    if (!u) continue;
+    if (/^www\./i.test(u)) u = `https://${u}`;
+    normalized.push(u);
+  }
+  return dedupe(normalized);
+}
+
 /**
- * Pulls emails, phone numbers (libphonenumber scan), heuristic proper names, and place-like phrases from free text.
+ * Pulls emails, URLs, phone numbers (libphonenumber scan), heuristic proper names, and place-like phrases from free text.
  * Names and places are best-effort heuristics, not full NER.
  */
 export function extractEntities(text: string, defaultCountry: CountryCode = 'US'): ExtractedEntities {
   const emails = dedupe(text.match(EMAIL_RE) ?? []);
+  const urls = extractUrlsFromText(text);
 
   const phones: string[] = [];
   try {
@@ -89,5 +109,6 @@ export function extractEntities(text: string, defaultCountry: CountryCode = 'US'
     phones: phonesDeduped,
     places: dedupe(places),
     properNames: dedupe(properNames),
+    urls,
   };
 }
