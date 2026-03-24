@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { guardValidateEntityRateLimit } from '@/lib/rateLimit/guard';
 import type { EntityKind } from '@/lib/entities/types';
 import { validateEntity } from '@/lib/entities/validate';
 
@@ -10,6 +11,9 @@ function isEntityKind(s: string): s is EntityKind {
 }
 
 export async function POST(request: Request) {
+  const limited = await guardValidateEntityRateLimit(request);
+  if (limited) return limited;
+
   let body: { kind?: string; value?: string; defaultCountry?: string };
   try {
     body = await request.json();

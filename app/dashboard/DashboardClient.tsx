@@ -19,6 +19,9 @@ import { Breadcrumbs, breadcrumbIcons } from '@/components/Breadcrumbs';
 import { ReportActions } from '@/components/ReportActions';
 import { ScamAlerts } from '@/components/ScamAlerts';
 import { AnalysisSkeleton } from '@/components/AnalysisSkeleton';
+import { HighlightedSourceText } from '@/components/analysis/HighlightedSourceText';
+import { VerificationRunway } from '@/components/analysis/VerificationRunway';
+import { InboundEmailCallout } from '@/components/InboundEmailCallout';
 import { ContextualHelp } from '@/components/ContextualHelp';
 import { useToast } from '@/context/ToastContext';
 import { useTour } from '@/context/TourContext';
@@ -208,21 +211,21 @@ export default function DashboardClient() {
                   <p className={`${textPrimary} leading-relaxed`}>{result.why_risky}</p>
                 </div>
               )}
-              {result.triggered_phrases && result.triggered_phrases.length > 0 && (
-                <div className={`${cardBg} border rounded-2xl p-6 ${cardBorder}`}>
-                  <h3 className={`${textMuted} text-xs font-bold uppercase tracking-wider mb-3`}>Phrases that triggered the score</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {result.triggered_phrases.map((p, i) => (
-                      <span key={i} className={`px-3 py-1 rounded-lg text-sm font-mono ${isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>{p}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <HighlightedSourceText sourceText={inputText} result={result} isDark={isDark} />
+
+              <VerificationRunway
+                entities={result.entities}
+                riskScore={result.risk_score}
+                isDark={isDark}
+                scanId={historyEntry?.id}
+              />
 
               {result.entities && (
                 <div className={`${cardBg} border rounded-2xl p-6 ${cardBorder}`}>
-                  <h3 className={`${textMuted} text-xs font-bold uppercase tracking-wider mb-3`}>Entity Recognition + Search Validation</h3>
-                  <p className="text-sm text-slate-500 mb-4">Detected names, emails, phones, addresses, businesses, or nonprofits with suggested verification search terms.</p>
+                  <h3 className={`${textMuted} text-xs font-bold uppercase tracking-wider mb-3`}>Extracted details</h3>
+                  <p className={`text-sm mb-4 ${textDim}`}>
+                    Raw fields from your message. Use the verification checklist above for step-by-step checks.
+                  </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     {(['names', 'emails', 'phones', 'addresses', 'businesses', 'nonprofits'] as const).map((field) => {
                       const values = result.entities?.[field] ?? [];
@@ -319,7 +322,10 @@ export default function DashboardClient() {
             </div>
           </div>
 
-          <div className="max-w-3xl mx-auto"><ScamAlerts isDark={isDark} /></div>
+          <div className="max-w-3xl mx-auto space-y-4">
+            <InboundEmailCallout isDark={isDark} />
+            <ScamAlerts isDark={isDark} />
+          </div>
 
           <div>
             <p className={`text-sm font-medium mb-3 ${textMuted}`}>Try a sample</p>

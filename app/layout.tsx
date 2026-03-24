@@ -7,6 +7,7 @@ import { ToastContainer } from '@/components/ui/Toast';
 import { TourOverlay } from '@/components/TourOverlay';
 import { AppShell } from '@/components/AppShell';
 import './globals.css';
+import { Analytics } from "@vercel/analytics/next"
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -37,6 +38,7 @@ export default function RootLayout({
               <TourOverlay />
             </body>
           </html>
+          <Analytics />
         </TourProvider>
       </ToastProvider>
     </ClerkProvider>

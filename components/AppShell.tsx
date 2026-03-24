@@ -41,6 +41,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setTheme(t);
   };
 
+  const showSidebar = userLoaded && Boolean(user) && pathname !== '/';
+
   return (
     <div
       className={`min-h-screen font-sans selection:bg-teal-500/25 ${isDark ? 'bg-[#121a24] text-slate-200' : 'bg-[#f4f7fb] text-slate-800'}`}
@@ -87,8 +89,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
         </header>
-        <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen((o) => !o)} onSettings={() => setShowSettings(true)} isDark={isDark} />
-        <main className="flex-1 lg:pl-56">{children}</main>
+        {showSidebar && (
+          <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen((o) => !o)} onSettings={() => setShowSettings(true)} isDark={isDark} />
+        )}
+        <main className={showSidebar ? 'flex-1 lg:pl-56' : 'flex-1'}>{children}</main>
         <footer className={`border-t py-8 mt-12 ${isDark ? 'border-slate-700/60 bg-slate-900/40' : 'border-sky-100/90 bg-white/70'}`}>
           <div className="px-4 text-center space-y-2">
             <p className={`text-sm ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>© {new Date().getFullYear()} ScamShield AI. Not legal advice. For informational purposes only.</p>

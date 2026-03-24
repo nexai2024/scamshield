@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { guardExtractEntitiesRateLimit } from '@/lib/rateLimit/guard';
 import type { CountryCode } from 'libphonenumber-js';
 
 import { extractEntities } from '@/lib/entities/extract';
@@ -62,6 +63,9 @@ const SYSTEM_PROMPT =
   'omit fields that would be empty; use empty arrays when nothing found. Output only valid JSON.';
 
 export async function POST(request: Request) {
+  const limited = await guardExtractEntitiesRateLimit(request);
+  if (limited) return limited;
+
   const openai = process.env.OPENAI_API_KEY
     ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
     : null;

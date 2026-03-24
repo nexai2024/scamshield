@@ -58,6 +58,50 @@ AI-powered scam and fraud detection for messages, emails, and texts. Built with 
 
 Configure Stripe webhook URL to `https://your-domain/api/webhooks/stripe` and use the raw body for signature verification.
 
+- `POST /api/webhooks/inbound-email` – receive a forwarded suspicious email, run analysis, store a time-limited report, and (optionally) email the sender a link. See **Inbound email → report** below.
+
+### Inbound email → report
+
+Users can forward or BCC a dedicated address; the app analyzes the **plain-text/HTML body** and replies with a private URL like `/report/<token>` (about **7 days** TTL).
+
+1. **Webhook URL** (HTTPS):  
+   `https://<your-domain>/api/webhooks/inbound-email?secret=<INBOUND_EMAIL_WEBHOOK_SECRET>`  
+   Or omit the query param and send header `Authorization: Bearer <INBOUND_EMAIL_WEBHOOK_SECRET>` (or `x-scamshield-webhook-secret`).
+
+2. **SendGrid Inbound Parse** (common): point your subdomain MX to SendGrid, set the webhook POST URL above. The handler reads `multipart/form-data` fields `text`, `html`, `from`, `subject`.
+
+3. **Storage**: set **Upstash Redis** (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`). In **development**, if Redis is unset, reports are kept **in memory** only (lost on restart).
+
+4. **Reply email**: [Resend](https://resend.com) — `RESEND_API_KEY` and `INBOUND_REPLY_FROM` (a verified sender). Without these, the report is still created but no email is sent.
+
+5. **UI**: set `NEXT_PUBLIC_INBOUND_EMAIL` to the same address users forward to (shown on the Scanner dashboard).
+
+**Manual test** (JSON body, same secret):
+
+```bash
+curl -s -X POST "http://localhost:3000/api/webhooks/inbound-email?secret=YOUR_SECRET" \
+  -H "Content-Type: application/json" \
+  -d "{\"from\":\"you@example.com\",\"subject\":\"Test\",\"text\":\"URGENT: Pay $500 in gift cards to avoid account closure. Click here now.\"}"
+```
+
+Other providers (e.g. Resend inbound) may use a different JSON shape; extend `lib/inbound/parseInboundRequest.ts` if needed.
+
+## API rate limiting
+
+User-facing JSON routes apply limits per **Clerk user id** (when signed in) or **client IP** (guests). `POST /api/webhooks/stripe` is **not** rate limited (Stripe retries).
+
+| Route | Default (sliding window) |
+|-------|---------------------------|
+| `POST /api/analyze` | 12 / minute |
+| `POST /api/extract-entities` | 30 / minute |
+| `POST /api/validate-entity` | 90 / minute |
+| `POST /api/create-checkout-session` | 8 / minute per user |
+| `POST /api/webhooks/inbound-email` | 20 / minute per connecting IP |
+
+With **Upstash Redis** configured, limits are shared across all server instances. Without Redis, the app uses a **fixed-window in-memory** fallback (fine for local dev; production serverless should use Redis for consistent limits).
+
+429 responses include `Retry-After`, `X-RateLimit-*`, and JSON `{ error, retryAfterSeconds }`. Set `RATE_LIMIT_DISABLED=true` only for local testing.
+
 ## Security
 
 Do not commit `.env` or `.env.local`. Rotate any keys that were ever committed.

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import Stripe from 'stripe';
+import { guardCheckoutRateLimit } from '@/lib/rateLimit/guard';
 
 export async function POST() {
   const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
@@ -18,6 +19,9 @@ export async function POST() {
   if (!userId) {
     return NextResponse.json({ error: 'Sign in required to subscribe.' }, { status: 401 });
   }
+
+  const checkoutLimited = await guardCheckoutRateLimit(userId);
+  if (checkoutLimited) return checkoutLimited;
 
   const stripe = new Stripe(STRIPE_SECRET_KEY);
   const origin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';

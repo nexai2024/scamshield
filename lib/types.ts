@@ -8,6 +8,12 @@ export interface EntityRecognitionResult {
   validation_hints: string[];
 }
 
+/** Links an exact phrase from the message to red flag list indices from the same analysis. */
+export interface PhraseAttribution {
+  phrase: string;
+  linked_red_flag_indexes: number[];
+}
+
 export interface AnalysisResult {
   risk_score: number;
   risk_level: 'Safe' | 'Low Risk' | 'Medium Risk' | 'High Risk' | 'Critical';
@@ -17,6 +23,8 @@ export interface AnalysisResult {
   advice: string;
   why_risky?: string;
   triggered_phrases?: string[];
+  /** When present, maps phrases to `red_flags` by index for inline explainability. */
+  phrase_attributions?: PhraseAttribution[];
   entities?: EntityRecognitionResult;
 }
 
