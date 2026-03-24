@@ -30,7 +30,7 @@ export function Settings({ theme, onThemeChange, onClose, isDark }: SettingsProp
   const border = isDark ? 'border-slate-800' : 'border-slate-200';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-800/30 backdrop-blur-sm dark:bg-slate-900/45">
       <div className={`w-full max-w-md rounded-2xl border p-6 shadow-xl ${bg} ${border}`}>
         <div className="flex items-center justify-between mb-6">
           <h2 className={`text-xl font-bold ${text}`}>Settings</h2>
@@ -45,7 +45,7 @@ export function Settings({ theme, onThemeChange, onClose, isDark }: SettingsProp
               <button
                 key={value}
                 onClick={() => handleTheme(value)}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border transition-colors ${theme === value ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' : isDark ? 'border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-800'}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border transition-colors ${theme === value ? 'border-teal-600 bg-teal-600/10 text-teal-700 dark:text-teal-400' : isDark ? 'border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-800'}`}
               >
                 <Icon className="w-4 h-4" />
                 <span className="text-sm font-medium">{label}</span>

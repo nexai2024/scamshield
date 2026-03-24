@@ -13,9 +13,9 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onToggle, onSettings, isDark = true }: SidebarProps) {
   const pathname = usePathname();
-  const bg = isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200';
-  const linkActive = isDark ? 'bg-slate-800 text-emerald-400' : 'bg-slate-100 text-emerald-600';
-  const linkInactive = isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900';
+  const bg = isDark ? 'bg-slate-900 border-slate-700/80' : 'bg-white border-sky-100';
+  const linkActive = isDark ? 'bg-slate-800 text-teal-400' : 'bg-sky-50 text-teal-700';
+  const linkInactive = isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' : 'text-slate-600 hover:bg-sky-50/80 hover:text-slate-900';
   const isDashboard = pathname === '/dashboard';
   const isHistory = pathname === '/history';
   return (
@@ -23,7 +23,7 @@ export function Sidebar({ isOpen, onToggle, onSettings, isDark = true }: Sidebar
       <button
         type="button"
         onClick={onToggle}
-        className={`fixed left-0 top-20 z-30 p-2 rounded-r-lg border-b border-r transition-all ${isDark ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-500'}`}
+        className={`fixed left-0 top-20 z-30 p-2 rounded-r-lg border-b border-r transition-all ${isDark ? 'bg-slate-900 border-slate-600 text-slate-400' : 'bg-white border-sky-100 text-slate-500'}`}
         aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
       >
         {isOpen ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
@@ -44,7 +44,7 @@ export function Sidebar({ isOpen, onToggle, onSettings, isDark = true }: Sidebar
             <History className="w-5 h-5 shrink-0" />
             History
           </Link>
-          <div className="mt-4 pt-4 border-t border-slate-700">
+          <div className={`mt-4 pt-4 border-t ${isDark ? 'border-slate-700' : 'border-sky-100'}`}>
             <button type="button" onClick={onSettings} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-colors w-full ${linkInactive}`}>
               <Settings className="w-5 h-5 shrink-0" />
               Settings

@@ -59,7 +59,7 @@ export function ScanHistory({ userId, isDark }: ScanHistoryProps) {
   };
 
   const cardBg = isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200';
-  const inputBg = isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200';
+  const inputBg = isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200';
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -85,7 +85,7 @@ export function ScanHistory({ userId, isDark }: ScanHistoryProps) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by snippet, risk level, or scam type..."
-          className={`w-full pl-12 pr-4 py-3 rounded-xl border ${inputBg} ${isDark ? 'text-white placeholder:text-slate-500' : 'text-slate-900 placeholder:text-slate-400'} focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent`}
+          className={`w-full pl-12 pr-4 py-3 rounded-xl border ${inputBg} ${isDark ? 'text-white placeholder:text-slate-500' : 'text-slate-900 placeholder:text-slate-400'} focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent`}
         />
       </div>
 
@@ -101,7 +101,7 @@ export function ScanHistory({ userId, isDark }: ScanHistoryProps) {
             <div key={entry.id} className={`${cardBg} border rounded-xl p-4 flex items-start justify-between gap-4 ${isDark ? 'hover:border-slate-700' : 'hover:border-slate-300'} transition-colors`}>
               <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onSelectEntry(entry)}>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-sm font-bold ${entry.risk_score > 75 ? 'text-red-500' : entry.risk_score > 40 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                  <span className={`text-sm font-bold ${entry.risk_score > 75 ? 'text-red-500' : entry.risk_score > 40 ? 'text-amber-500' : 'text-teal-600 dark:text-teal-400'}`}>
                     {entry.risk_score} · {entry.risk_level}
                   </span>
                   <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{new Date(entry.date).toLocaleString()}</span>
@@ -109,7 +109,7 @@ export function ScanHistory({ userId, isDark }: ScanHistoryProps) {
                 <p className={`text-sm truncate ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{entry.snippet}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <button onClick={() => downloadReportPDF(entry)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-emerald-400 hover:bg-slate-800' : 'text-slate-500 hover:text-emerald-500 hover:bg-slate-100'}`} title="Download PDF report">
+                <button onClick={() => downloadReportPDF(entry)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-teal-400 hover:bg-slate-800' : 'text-slate-500 hover:text-teal-600 hover:bg-sky-50'}`} title="Download PDF report">
                   <FileText className="w-4 h-4" />
                 </button>
                 <Tooltip label="Delete scan">

@@ -24,7 +24,7 @@ export function ConfirmDialog({
   isDark = true,
 }: ConfirmDialogProps) {
   if (!open) return null;
-  const btnConfirm = variant === 'danger' ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-emerald-500 hover:bg-emerald-600 text-white';
+  const btnConfirm = variant === 'danger' ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-teal-600 hover:bg-teal-700 text-white';
   const cardBg = isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200';
   const textClass = isDark ? 'text-white' : 'text-slate-900';
   const textMuted = isDark ? 'text-slate-400' : 'text-slate-600';

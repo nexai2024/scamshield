@@ -28,7 +28,7 @@ export function Testimonials({ isDark = true }: TestimonialsProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {testimonials.map((t) => (
             <div key={t.id} className={`p-6 border rounded-2xl flex flex-col ${cardBg}`}>
-              <Quote className="w-8 h-8 text-emerald-500/50 mb-4" />
+              <Quote className="w-8 h-8 text-teal-600/40 dark:text-teal-400/40 mb-4" />
               <p className={`flex-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>&ldquo;{t.quote}&rdquo;</p>
               <div className={`mt-4 pt-4 border-t flex items-center justify-between ${borderT}`}>
                 <div>
@@ -36,7 +36,7 @@ export function Testimonials({ isDark = true }: TestimonialsProps) {
                   <p className={`text-sm ${textDim}`}>{t.role}</p>
                 </div>
                 {t.outcome && (
-                  <span className="flex items-center gap-1 text-xs font-medium text-emerald-500">
+                  <span className="flex items-center gap-1 text-xs font-medium text-teal-600 dark:text-teal-400">
                     <CheckCircle className="w-4 h-4" /> {t.outcome}
                   </span>
                 )}
@@ -50,7 +50,7 @@ export function Testimonials({ isDark = true }: TestimonialsProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {caseStudies.map((c) => (
             <div key={c.id} className={`p-6 border rounded-2xl ${caseBg}`}>
-              <p className="text-2xl font-bold text-emerald-500 mb-1">{c.amountSaved}</p>
+              <p className="text-2xl font-bold text-teal-600 dark:text-teal-400 mb-1">{c.amountSaved}</p>
               <h3 className={`text-lg font-bold mb-2 ${textPrimary}`}>{c.title}</h3>
               <p className={`text-sm ${textMuted}`}>{c.summary}</p>
             </div>

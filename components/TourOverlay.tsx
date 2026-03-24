@@ -23,7 +23,7 @@ export function TourOverlay() {
         <p id="tour-body" className="text-slate-400 text-sm mb-4">{step.body}</p>
         <div className="flex justify-between items-center">
           <button type="button" onClick={endTour} className="text-slate-500 hover:text-slate-300 text-sm">Skip tour</button>
-          <button type="button" onClick={nextStep} className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-medium">
+          <button type="button" onClick={nextStep} className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium shadow-sm shadow-teal-600/25">
             {stepIndex < steps.length - 1 ? 'Next' : 'Done'}
           </button>
         </div>

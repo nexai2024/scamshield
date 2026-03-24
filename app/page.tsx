@@ -20,25 +20,26 @@ export default function LandingPage() {
   const textDim = isDark ? 'text-slate-500' : 'text-slate-500';
   const cardBg = isDark ? 'bg-slate-900' : 'bg-white';
   const cardBorder = isDark ? 'border-slate-800' : 'border-slate-200';
-  const featureCardBg = isDark ? 'bg-slate-950' : 'bg-slate-50';
-  const sectionBorder = isDark ? 'border-slate-800/50' : 'border-slate-200';
-  const sectionBg = isDark ? 'bg-slate-900/30' : 'bg-slate-200/50';
-  const hoverBorder = isDark ? 'hover:border-slate-700' : 'hover:border-slate-300';
-  const heroSecondaryBtn = isDark ? 'bg-slate-900 hover:bg-slate-800 text-white border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-900 border-slate-300';
+  const sectionBorder = isDark ? 'border-slate-700/50' : 'border-sky-100';
+  const sectionBg = isDark ? 'bg-slate-900/25' : 'bg-white/60';
+  const hoverBorder = isDark ? 'hover:border-slate-600' : 'hover:border-sky-200';
+  const heroSecondaryBtn = isDark
+    ? 'bg-slate-800/80 hover:bg-slate-800 text-slate-100 border-slate-600'
+    : 'bg-white hover:bg-sky-50/80 text-slate-800 border-slate-200 shadow-sm';
 
   return (
     <div className="animate-in fade-in duration-500">
       <SubNav links={landingNavLinks} isDark={isDark} />
-      <section id="hero" className="w-full border-b border-slate-800/50 overflow-hidden">
+      <section id="hero" className={`w-full border-b overflow-hidden ${sectionBorder}`}>
         <div className={`${CONTENT_MAX_W} mx-auto pt-16 pb-32 px-4 text-center relative`}>
-          {/* Ambient glow */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-emerald-500/10 blur-[100px] rounded-full -z-10 animate-glow-pulse" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-cyan-500/5 blur-[80px] rounded-full -z-10 animate-shimmer" />
+          {/* Soft ambient — calm blue-teal, not heavy green */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-sky-400/15 dark:bg-sky-500/10 blur-[100px] rounded-full -z-10 animate-glow-pulse" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-teal-400/10 dark:bg-teal-500/10 blur-[80px] rounded-full -z-10 animate-shimmer" />
 
           {/* Logo + glassy badge */}
           <div className="flex flex-col items-center gap-6 mb-8">
             <div className="relative animate-float will-change-transform">
-              <div className="absolute -inset-4 rounded-2xl bg-emerald-500/5 blur-xl" aria-hidden />
+              <div className="absolute -inset-4 rounded-2xl bg-teal-500/8 blur-xl" aria-hidden />
               {/* <Image
                 src="/logo-scamshield.png"
                 alt="Scam Shield"
@@ -48,13 +49,14 @@ export default function LandingPage() {
                 priority
               /> */}
             </div>
-            <div className={`glass-panel inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-glass transition-all duration-300 ${isDark ? 'text-blue-300' : 'text-blue-600'}`}>
+            <div
+              className={`glass-panel inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-glass transition-all duration-300 ${isDark ? 'text-sky-300' : 'text-sky-800'}`}
+            >
               <Lock className="w-3.5 h-3.5" /> AI-Powered Fraud Detection
             </div>
           </div>
 
-          {/* 3D hero type */}
-          <h1 className="hero-3d-text text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 leading-tight select-none">
+          <h1 className="hero-trust-title text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 leading-[1.05] select-none">
             SCAM SHIELD
           </h1>
           <p className={`text-lg sm:text-xl mb-10 max-w-2xl mx-auto leading-relaxed ${textMuted}`}>
@@ -64,7 +66,10 @@ export default function LandingPage() {
           {/* Glassy CTA strip */}
           <div className="glass-panel rounded-2xl p-6 sm:p-8 max-w-xl mx-auto mb-10 shadow-glass transition-all duration-300 hover:shadow-glow">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/dashboard" className="w-full sm:w-auto px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-900 rounded-xl font-bold text-lg shadow-xl shadow-emerald-500/25 transition-all duration-300 hover:scale-105 hover:shadow-glow text-center">
+              <Link
+                href="/dashboard"
+                className="w-full sm:w-auto px-8 py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-teal-600/25 transition-all duration-300 hover:scale-[1.02] hover:shadow-glow text-center"
+              >
                 Scan a Message Free
               </Link>
               <a href="#how-it-works" className={`w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-lg border transition-all duration-300 text-center hover:scale-[1.02] ${heroSecondaryBtn}`}>
@@ -101,7 +106,7 @@ export default function LandingPage() {
               <p className={`${textMuted} leading-relaxed`}>Our NLP engine detects linguistic triggers and script patterns used by fraud rings that humans often miss.</p>
             </div>
             <div className={`glass-panel p-8 rounded-3xl transition-all duration-300 flex flex-col ${cardBorder} ${hoverBorder} hover:shadow-glow hover:-translate-y-0.5`}>
-              <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-6 text-emerald-500 dark:text-emerald-400 shadow-inner">
+              <div className="w-14 h-14 bg-teal-600/10 rounded-2xl flex items-center justify-center mb-6 text-teal-600 dark:text-teal-400 shadow-inner">
                 <Eye className="w-7 h-7" />
               </div>
               <h3 className={`text-xl font-bold mb-3 ${textPrimary}`}>Visual Analysis</h3>

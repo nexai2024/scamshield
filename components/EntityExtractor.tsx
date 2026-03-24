@@ -222,7 +222,7 @@ export function EntityExtractor({
   const cardBorder = isDark ? 'border-slate-800' : 'border-slate-200';
   const textPrimary = isDark ? 'text-white' : 'text-slate-900';
   const textMuted = isDark ? 'text-slate-400' : 'text-slate-600';
-  const inputBg = isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200';
+  const inputBg = isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200';
   const pillMuted = isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700';
   const toggleInactive = isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900';
   const toggleActive = isDark ? 'bg-amber-500/20 text-amber-200 border-amber-500/40' : 'bg-amber-100 text-amber-900 border-amber-300';
@@ -357,7 +357,7 @@ export function EntityExtractor({
                 </button>
                 {r && !busy ? (
                   r.valid ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 max-w-full">
+                    <span className="inline-flex items-center gap-1 text-xs text-teal-700 dark:text-teal-400 max-w-full">
                       <CheckCircle2 className="w-3.5 h-3.5 shrink-0" aria-hidden />
                       <span className="truncate">{r.detail ?? 'OK'}</span>
                     </span>

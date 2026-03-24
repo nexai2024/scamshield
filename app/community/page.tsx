@@ -55,7 +55,7 @@ export default function CommunityPage() {
           <h1 className="text-3xl font-bold">Community Scam Reports</h1>
           <p className="text-sm text-slate-500">Share a scam example and learn from other users. All posts are stored locally in your browser.</p>
         </div>
-        <Link href="/dashboard" className="rounded-lg px-4 py-2 bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400 transition">Back to Scanner</Link>
+        <Link href="/dashboard" className="rounded-lg px-4 py-2 bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 shadow-sm shadow-teal-600/20 transition">Back to Scanner</Link>
       </div>
 
       <form onSubmit={handleSubmit} className="mb-6 border rounded-2xl p-5 shadow-sm">
@@ -64,11 +64,11 @@ export default function CommunityPage() {
           onChange={(e) => setText(e.target.value)}
           rows={5}
           placeholder="Describe the scam message, URL, or social tactic you found..."
-          className="w-full p-3 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition"
+          className="w-full p-3 rounded-lg border border-slate-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition"
         />
         <div className="mt-3 flex items-center justify-between gap-3">
           <span className="text-xs text-slate-500">Minimum 10 characters</span>
-          <button type="submit" disabled={!canSubmit} className={`px-4 py-2 rounded-lg font-semibold text-sm ${canSubmit ? 'bg-emerald-500 text-white hover:bg-emerald-400' : 'bg-slate-200 text-slate-500 cursor-not-allowed'}`}>
+          <button type="submit" disabled={!canSubmit} className={`px-4 py-2 rounded-lg font-semibold text-sm ${canSubmit ? 'bg-teal-600 text-white hover:bg-teal-700' : 'bg-slate-200 text-slate-500 cursor-not-allowed'}`}>
             Post to Community
           </button>
         </div>

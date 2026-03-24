@@ -5,7 +5,7 @@ import type { ToastItem, ToastType } from '@/context/ToastContext';
 import { useToast } from '@/context/ToastContext';
 
 const typeStyles: Record<ToastType, string> = {
-  success: 'bg-emerald-500/90 text-white border-emerald-400/50',
+  success: 'bg-teal-600/95 text-white border-teal-400/40',
   error: 'bg-red-500/90 text-white border-red-400/50',
   info: 'bg-slate-700/95 text-white border-slate-500/50',
 };

@@ -34,10 +34,13 @@ export function SubNav({ links, isDark = true, className = '' }: SubNavProps) {
     return () => observer.disconnect();
   }, [links]);
   const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  const linkBase = isDark ? 'text-slate-400 hover:text-white transition-colors' : 'text-slate-500 hover:text-slate-900 transition-colors';
-  const linkActive = isDark ? 'text-emerald-400 font-medium' : 'text-emerald-600 font-medium';
+  const linkBase = isDark ? 'text-slate-400 hover:text-slate-100 transition-colors' : 'text-slate-500 hover:text-slate-900 transition-colors';
+  const linkActive = isDark ? 'text-teal-400 font-medium' : 'text-teal-700 font-medium';
   return (
-    <nav className={`sticky top-16 z-40 border-b py-3 ${isDark ? 'bg-slate-950/95 border-slate-800' : 'bg-slate-100/95 border-slate-200'} backdrop-blur-md ${className}`} aria-label="Page sections">
+    <nav
+      className={`sticky top-16 z-40 border-b py-3 ${isDark ? 'bg-[#121a24]/95 border-slate-700/70' : 'bg-white/90 border-sky-100'} backdrop-blur-md ${className}`}
+      aria-label="Page sections"
+    >
       <div className="max-w-6xl mx-auto px-4 flex flex-wrap gap-4 justify-center">
         {links.map(({ id, label }) => (
           <button key={id} type="button" onClick={() => scrollTo(id)} className={`text-sm ${activeId === id ? linkActive : linkBase}`}>

@@ -59,7 +59,7 @@ export default function DashboardClient() {
   const textPrimary = isDark ? 'text-white' : 'text-slate-900';
   const textMuted = isDark ? 'text-slate-400' : 'text-slate-600';
   const textDim = isDark ? 'text-slate-500' : 'text-slate-500';
-  const inputBg = isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200';
+  const inputBg = isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200';
   const hoverBorder = isDark ? 'hover:border-slate-700' : 'hover:border-slate-300';
   const dashboardMuted = isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900';
   const amberText = isDark ? 'text-amber-200' : 'text-amber-800';
@@ -170,7 +170,7 @@ export default function DashboardClient() {
               <button type="button" onClick={() => { addCommunityPost({ id: `${Date.now()}-${Math.random().toString(16).slice(2)}`, date: new Date().toISOString(), text: `${inputText.trim() || '[Scanned snippet]'}\n\nRisk: ${result.risk_level} (${result.risk_score})\nType: ${result.scam_type}`, risk_score: result.risk_score, risk_level: result.risk_level, scam_type: result.scam_type }); toast.showToast('Posted to community reports.'); }} className="flex items-center gap-2 text-blue-500 hover:text-blue-600 font-medium">
                 <ShieldCheck className="w-4 h-4" /> Post to Community
               </button>
-              <button type="button" onClick={() => { navigator.clipboard.writeText('ScamShield Risk: ' + result.risk_level); toast.showToast('Copied!'); }} className="flex items-center gap-2 text-emerald-500 hover:text-emerald-600 font-medium">
+              <button type="button" onClick={() => { navigator.clipboard.writeText('ScamShield Risk: ' + result.risk_level); toast.showToast('Copied!'); }} className="flex items-center gap-2 text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 font-medium">
                 <Copy className="w-4 h-4" /> Share Verdict
               </button>
             </div>
@@ -178,7 +178,7 @@ export default function DashboardClient() {
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             <div className={`md:col-span-5 border rounded-2xl p-8 flex flex-col items-center justify-center relative overflow-hidden ${cardBg} ${cardBorder}`}>
-              <div className={`absolute inset-0 opacity-20 blur-3xl ${result.risk_score > 50 ? 'bg-red-500' : 'bg-emerald-500'}`} />
+              <div className={`absolute inset-0 opacity-20 blur-3xl ${result.risk_score > 50 ? 'bg-red-500' : 'bg-teal-500'}`} />
               <div className="relative w-48 h-48 mb-4">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="45" fill="none" stroke={isDark ? '#1e293b' : '#e2e8f0'} strokeWidth="8" />
@@ -192,7 +192,7 @@ export default function DashboardClient() {
                   </span>
                 </div>
               </div>
-              <div className={`text-xl font-bold px-4 py-1 rounded-full border ${result.risk_score > 75 ? 'bg-red-500/10 text-red-500 border-red-500/20' : result.risk_score > 40 ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
+              <div className={`text-xl font-bold px-4 py-1 rounded-full border ${result.risk_score > 75 ? 'bg-red-500/10 text-red-500 border-red-500/20' : result.risk_score > 40 ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/25'}`}>
                 {result.risk_level}
               </div>
             </div>
@@ -261,15 +261,15 @@ export default function DashboardClient() {
                 </div>
                 <div className="space-y-2">
                   {result.red_flags.map((flag, i) => (
-                    <div key={i} className={`p-3 rounded-lg border text-sm flex items-start gap-2 ${isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
+                    <div key={i} className={`p-3 rounded-lg border text-sm flex items-start gap-2 ${isDark ? 'bg-slate-900 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
                       <span className="mt-1 w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
                       {flag}
                     </div>
                   ))}
                 </div>
               </div>
-              <div className={`p-6 rounded-2xl border ${isDark ? 'bg-gradient-to-r from-slate-900 to-slate-800 border-slate-700' : 'bg-emerald-50 border-emerald-200'}`}>
-                <h3 className="text-emerald-600 dark:text-emerald-400 font-bold mb-2 uppercase text-xs tracking-wider">Recommended Action</h3>
+              <div className={`p-6 rounded-2xl border ${isDark ? 'bg-gradient-to-r from-slate-900 to-slate-800 border-slate-600' : 'bg-teal-50/80 border-teal-100'}`}>
+                <h3 className="text-teal-800 dark:text-teal-300 font-bold mb-2 uppercase text-xs tracking-wider">Recommended Action</h3>
                 <p className={`font-medium ${textPrimary}`}>{result.advice}</p>
               </div>
             </div>
@@ -281,7 +281,7 @@ export default function DashboardClient() {
             <h1 className={`text-3xl font-bold mb-2 ${textPrimary}`}>Scanner Dashboard</h1>
             <p className={textMuted}>Paste text or upload a screenshot to begin analysis.</p>
             {!hasCompletedTour && (
-              <button type="button" onClick={startTour} className="mt-2 text-sm text-emerald-500 hover:text-emerald-400 font-medium">Take the tour</button>
+              <button type="button" onClick={startTour} className="mt-2 text-sm text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 font-medium">Take the tour</button>
             )}
           </div>
 
@@ -291,11 +291,11 @@ export default function DashboardClient() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder="Paste suspicious text, email content, or DM here..."
-                className={`w-full h-48 p-6 rounded-xl border focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none resize-none transition-all ${inputBg} ${isDark ? 'text-slate-200 placeholder:text-slate-600' : 'text-slate-800 placeholder:text-slate-400'}`}
+                className={`w-full h-48 p-6 rounded-xl border focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none resize-none transition-all ${inputBg} ${isDark ? 'text-slate-200 placeholder:text-slate-500' : 'text-slate-800 placeholder:text-slate-400'}`}
               />
               {dragActive && (
-                <div className="absolute inset-0 bg-emerald-500/10 border-2 border-dashed border-emerald-500 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                  <div className="text-emerald-400 font-medium">Drop image to analyze</div>
+                <div className="absolute inset-0 bg-teal-500/10 border-2 border-dashed border-teal-500/70 dark:border-teal-400/50 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                  <div className="text-teal-700 dark:text-teal-300 font-medium">Drop image to analyze</div>
                 </div>
               )}
             </div>
@@ -312,7 +312,7 @@ export default function DashboardClient() {
                 data-tour-id="tour-analyze"
                 onClick={handleAnalyze}
                 disabled={analyzing || (!inputText && !fileName) || !canScan}
-                className={`w-full md:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors ${analyzing || (!inputText && !fileName) || !canScan ? (isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-200 text-slate-400') + ' cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-400 text-slate-900 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95'}`}
+                className={`w-full md:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors ${analyzing || (!inputText && !fileName) || !canScan ? (isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-200 text-slate-400') + ' cursor-not-allowed' : 'bg-teal-600 hover:bg-teal-700 text-white hover:shadow-lg hover:shadow-teal-600/25 active:scale-95'}`}
               >
                 {analyzing ? <><RefreshCw className="w-5 h-5 animate-spin" /> Analyzing...</> : <><Scan className="w-5 h-5" /> Analyze Now</>}
               </button>

@@ -17,7 +17,7 @@ export function SecurityBadges({ isDark = true, variant = 'inline', className = 
     <div className={`flex gap-4 flex-wrap items-center ${variant === 'stack' ? 'flex-col items-start' : ''} ${className}`} role="group" aria-label="Security and privacy">
       {items.map(({ icon: Icon, label }) => (
         <span key={label} className={`inline-flex items-center gap-2 text-xs font-medium ${textClass}`}>
-          <Icon className="w-3.5 h-3.5 text-emerald-500" aria-hidden />
+          <Icon className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden />
           {label}
         </span>
       ))}

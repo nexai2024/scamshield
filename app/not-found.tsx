@@ -15,7 +15,7 @@ export default function NotFound() {
       </p>
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold rounded-xl transition-colors"
+        className="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-sm shadow-teal-600/20 transition-colors"
       >
         <Scan className="w-5 h-5" />
         Back to Scanner

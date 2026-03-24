@@ -20,7 +20,7 @@ export function ContextualHelp({ title, content, isDark = true, className = '' }
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={isDark ? 'p-1.5 rounded-full text-slate-400 hover:text-emerald-400 hover:bg-slate-800' : 'p-1.5 rounded-full text-slate-500 hover:text-emerald-600 hover:bg-slate-200'}
+        className={isDark ? 'p-1.5 rounded-full text-slate-400 hover:text-teal-400 hover:bg-slate-800' : 'p-1.5 rounded-full text-slate-500 hover:text-teal-700 hover:bg-sky-50'}
         aria-label={`Help: ${title}`}
       >
         <HelpCircle className="w-4 h-4" />

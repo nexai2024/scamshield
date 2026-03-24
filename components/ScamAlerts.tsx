@@ -42,7 +42,7 @@ export function ScamAlerts({ isDark = true }: ScamAlertsProps) {
       </section>
       <section>
         <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${textPrimary}`}>
-          <Lightbulb className="w-5 h-5 text-emerald-500" /> Safety tips
+          <Lightbulb className="w-5 h-5 text-teal-600 dark:text-teal-400" /> Safety tips
         </h2>
         <div className="grid gap-3 sm:grid-cols-1 md:grid-cols-3">
           {scamTips.map((t) => (

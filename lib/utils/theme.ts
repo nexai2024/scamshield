@@ -3,14 +3,14 @@ import type { ThemeMode } from '@/lib/types';
 const KEY = 'scamshield_theme';
 
 export function getStoredTheme(): ThemeMode {
-  if (typeof window === 'undefined') return 'system';
+  if (typeof window === 'undefined') return 'light';
   try {
     const t = localStorage.getItem(KEY);
     if (t === 'dark' || t === 'light' || t === 'system') return t;
   } catch {
     // ignore
   }
-  return 'system';
+  return 'light';
 }
 
 export function setStoredTheme(mode: ThemeMode): void {
