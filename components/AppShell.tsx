@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const isDark = getEffectiveTheme(theme) === 'dark';
   const navBorder = isDark ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-white/80';
-  const navLinkActive = isDark ? 'text-white' : 'text-slate-900';
+  const navLinkActive = isDark ? 'text-[#FEFAEE]' : 'text-slate-900';
   const navLinkInactive = isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900';
   const navHoverBg = isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100';
 
@@ -43,18 +43,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className={`min-h-screen font-sans selection:bg-emerald-500/30 ${isDark ? 'bg-slate-950 text-slate-200' : 'bg-slate-100 text-slate-800'}`}>
       <div className={`w-full ${CONTENT_MAX_W} mx-auto min-h-screen flex flex-col`}>
         <header className={`border-b backdrop-blur-md sticky top-0 z-50 ${navBorder}`}>
-          <div className="px-4 h-16 flex items-center justify-between">
+          <div className="px-4 h-16 flex items-center justify-between bg-white-500">
             <Link href="/" className="flex items-center gap-2 rounded-lg hover:opacity-90 transition-opacity" aria-label="Go to home">
               <div className="bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
-                
-                <Image src="/logo-scamshield.png" alt="ScamShield" width={32} height={32} />  
-                
-                
+                <Image src="/scamshield-logo-sm.png" alt="ScamShield" width={32} height={32} />  
 
-              </div>
+                        </div>
               <span className={`text-xl font-bold tracking-tight ${navLinkActive}`}>Scam<span className="text-emerald-500">Shield</span></span>
             </Link>
-            <nav className="flex items-center gap-4 sm:gap-6">
+?<nav className="flex items-center gap-4 sm:gap-6">
               <Link href="/dashboard" className={`text-sm font-medium transition-colors ${pathname === '/dashboard' ? navLinkActive : navLinkInactive}`}>Scanner</Link>
               <Link href="/history" className={`text-sm font-medium transition-colors ${pathname === '/history' ? navLinkActive : navLinkInactive}`}>History</Link>
               <Link href="/community" className={`text-sm font-medium transition-colors ${pathname === '/community' ? navLinkActive : navLinkInactive}`}>Community</Link>
