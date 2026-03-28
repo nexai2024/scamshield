@@ -1,12 +1,15 @@
 'use client';
 
 import { Mail } from 'lucide-react';
+import { PUBLIC_INBOUND_SCAN_EMAIL } from '@/lib/constants';
 
-const email = process.env.NEXT_PUBLIC_INBOUND_EMAIL?.trim();
+function inboundEmailDisplay(): string {
+  return process.env.NEXT_PUBLIC_INBOUND_EMAIL?.trim() || PUBLIC_INBOUND_SCAN_EMAIL;
+}
 
-/** Shows when NEXT_PUBLIC_INBOUND_EMAIL is set — forward-to-analyze instructions. */
+/** Forward-to-analyze instructions (env override or default production address). */
 export function InboundEmailCallout({ isDark }: { isDark: boolean }) {
-  if (!email) return null;
+  const email = inboundEmailDisplay();
 
   const border = isDark ? 'border-slate-700 bg-slate-900/60' : 'border-sky-100 bg-white';
   const textMuted = isDark ? 'text-slate-400' : 'text-slate-600';

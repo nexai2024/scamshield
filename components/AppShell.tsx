@@ -42,6 +42,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   const showSidebar = userLoaded && Boolean(user) && pathname !== '/';
+  const isMarketingScreenshotStudio = pathname?.startsWith('/marketing/screenshots') ?? false;
+
+  if (isMarketingScreenshotStudio) {
+    return (
+      <div className="min-h-screen font-sans bg-[#f4f7fb] text-slate-800 antialiased selection:bg-teal-500/25">
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -52,7 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="px-4 h-16 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 rounded-lg hover:opacity-90 transition-opacity" aria-label="Go to home">
               <div className="bg-teal-600/10 p-2 rounded-lg border border-teal-600/15 dark:bg-teal-400/10 dark:border-teal-400/20">
-                <Image src="/scamshield-logo-sm.png" alt="ScamShield" width={32} height={32} />
+                <Image src="/scamshield-icon-logo.png" alt="ScamShield" width={32} height={32} />
               </div>
               <span className={`text-xl font-bold tracking-tight ${navLinkActive}`}>
                 Scam<span className="text-teal-600 dark:text-teal-400">Shield</span>

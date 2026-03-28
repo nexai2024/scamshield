@@ -1,5 +1,8 @@
 import OpenAI from 'openai';
 import type { AnalysisResult } from '@/lib/types';
+import { createLogger } from '@/lib/server/logger';
+
+const log = createLogger('analyze');
 
 const RISK_LEVELS = ['Safe', 'Low Risk', 'Medium Risk', 'High Risk', 'Critical'] as const;
 
@@ -147,7 +150,11 @@ export async function runAnalyze(text: string): Promise<AnalyzeOutcome> {
     return { ok: true, result };
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string; code?: string };
-    console.error('OpenAI API error:', err);
+    log.error('openai_request_failed', {
+      openaiStatus: e?.status,
+      openaiCode: e?.code,
+      openaiMessage: e?.message,
+    });
     const httpStatus =
       e?.status === 429 ? 429 : e?.status === 401 ? 401 : undefined;
     return {

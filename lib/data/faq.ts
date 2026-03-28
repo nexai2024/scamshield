@@ -1,3 +1,5 @@
+import { PUBLIC_INBOUND_SCAN_EMAIL } from '@/lib/constants';
+
 export interface FAQItem {
   id: string;
   question: string;
@@ -10,5 +12,9 @@ export const faqItems: FAQItem[] = [
   { id: 'do-you-store-data', question: 'Do you store my pasted text?', answer: 'We do not store your pasted content for marketing or resale. Analysis runs in real time. Pro users can optionally save scan history locally in their browser.' },
   { id: 'how-accurate', question: 'How accurate is ScamShield?', answer: 'Our AI is trained on known scam patterns and is very good at spotting common fraud. No tool is 100% accurate. Always use your judgment.' },
   { id: 'what-types', question: 'What types of scams can you detect?', answer: 'We detect phishing, romance scams, fake invoices, IRS/bank impersonation, tech support fraud, lottery/prize scams, and more. Paste any suspicious text or email and we will analyze it.' },
-  { id: 'email-forward', question: 'Can I forward a suspicious email to ScamShield?', answer: 'If your deployment shows a forward address on the Scanner page, you can forward or BCC that address. Our server analyzes the email body and sends you a private link to the full report. The link expires after several days. You must configure inbound email (e.g. SendGrid Inbound Parse), Redis storage, and Resend for replies — see the project README.' },
+  {
+    id: 'email-forward',
+    question: 'Can I email a message to scan?',
+    answer: `Yes. Forward the suspicious email (or BCC us) to ${PUBLIC_INBOUND_SCAN_EMAIL}. We analyze the message and email you back a private link to the full report. Links expire after several days—open it soon.`,
+  },
 ];

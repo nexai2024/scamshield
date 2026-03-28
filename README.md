@@ -86,6 +86,16 @@ curl -s -X POST "http://localhost:3000/api/webhooks/inbound-email?secret=YOUR_SE
 
 Other providers (e.g. Resend inbound) may use a different JSON shape; extend `lib/inbound/parseInboundRequest.ts` if needed.
 
+## Marketing screenshots (canonical assets)
+
+Single source for **landing**, **results + highlights**, **verification checklist**, and **email report link** visuals:
+
+- **Studio URL:** `/marketing/screenshots` (no chrome; `robots: noindex`).
+- **Frozen demo data:** `lib/marketing/canonicalScreenshotData.ts`
+- **Export PNGs:** with the dev server running, `npx playwright install chromium` once, then `npm run marketing:screenshots` → `public/marketing/screenshots/*.png` (see that folder’s `README.md`).
+
+Use the same files everywhere (site, social, press) so product and marketing stay aligned.
+
 ## API rate limiting
 
 User-facing JSON routes apply limits per **Clerk user id** (when signed in) or **client IP** (guests). `POST /api/webhooks/stripe` is **not** rate limited (Stripe retries).

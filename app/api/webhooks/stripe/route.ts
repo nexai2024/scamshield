@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { clerkClient } from '@clerk/nextjs/server';
 
+import { createLogger } from '@/lib/server/logger';
+
+const log = createLogger('webhook:stripe');
+
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 
@@ -12,18 +16,24 @@ async function setClerkUserPlan(userId: string, plan: string | null) {
       publicMetadata: { plan: plan ?? undefined },
     });
   } catch (e) {
-    console.error('Clerk metadata update failed:', e);
+    log.error('clerk_metadata_update_failed', { userId, ...serializeClerkErr(e) });
   }
+}
+
+function serializeClerkErr(e: unknown): Record<string, unknown> {
+  if (e instanceof Error) return { errMessage: e.message, errName: e.name };
+  return { err: String(e) };
 }
 
 export async function POST(request: Request) {
   if (!STRIPE_WEBHOOK_SECRET || !STRIPE_SECRET_KEY) {
+    log.warn('webhook_not_configured');
     return new NextResponse('Webhook not configured', { status: 503 });
   }
 
   const sig = request.headers.get('stripe-signature');
   if (!sig) {
-    return new NextResponse('Missing stripe-signature', { status: 400 });
+    return new NextResponse('Missing signature', { status: 400 });
   }
 
   let rawBody: string;
@@ -38,8 +48,8 @@ export async function POST(request: Request) {
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, STRIPE_WEBHOOK_SECRET);
   } catch (e) {
-    const err = e as Error;
-    return new NextResponse(`Webhook signature verification failed: ${err.message}`, { status: 400 });
+    log.error('signature_verification_failed', { errMessage: e instanceof Error ? e.message : String(e) });
+    return new NextResponse('Invalid signature', { status: 400 });
   }
 
   try {
@@ -64,11 +74,13 @@ export async function POST(request: Request) {
         ) {
           await setClerkUserPlan(userId, null);
         }
-        // Do not clear Pro on `incomplete` / `past_due` — avoids racing checkout.session.completed.
       }
     }
   } catch (e) {
-    console.error('Webhook handler error:', e);
+    log.error('handler_error', {
+      eventType: event.type,
+      errMessage: e instanceof Error ? e.message : String(e),
+    });
   }
 
   return new NextResponse(null, { status: 200 });

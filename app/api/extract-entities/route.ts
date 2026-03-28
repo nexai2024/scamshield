@@ -1,11 +1,20 @@
-import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { guardExtractEntitiesRateLimit } from '@/lib/rateLimit/guard';
 import type { CountryCode } from 'libphonenumber-js';
-
 import { extractEntities } from '@/lib/entities/extract';
 import { mergeExtractedEntities } from '@/lib/entities/merge';
 import type { ExtractedEntities } from '@/lib/entities/types';
+import {
+  getOrCreateRequestId,
+  jsonClientError,
+  jsonInternalError,
+  jsonOk,
+  jsonUpstreamError,
+  USER_SAFE,
+} from '@/lib/server/api-response';
+import { createLogger } from '@/lib/server/logger';
+import { guardExtractEntitiesRateLimit } from '@/lib/rateLimit/guard';
+
+const log = createLogger('api:extract-entities');
 
 function parseJsonFromResponse(content: string | null): Record<string, unknown> | null {
   if (!content || typeof content !== 'string') return null;
@@ -63,70 +72,98 @@ const SYSTEM_PROMPT =
   'omit fields that would be empty; use empty arrays when nothing found. Output only valid JSON.';
 
 export async function POST(request: Request) {
-  const limited = await guardExtractEntitiesRateLimit(request);
-  if (limited) return limited;
-
-  const openai = process.env.OPENAI_API_KEY
-    ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-    : null;
-
-  if (!openai) {
-    return NextResponse.json(
-      { error: 'OPENAI_API_KEY is not configured. Set it in .env.' },
-      { status: 503 }
-    );
-  }
-
-  let body: { text?: string; mergeWithLocal?: boolean; defaultCountry?: string };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
-  }
-
-  const text = body?.text;
-  if (typeof text !== 'string' || !text.trim()) {
-    return NextResponse.json({ error: 'Missing or invalid "text" in request body.' }, { status: 400 });
-  }
-
-  const mergeWithLocal = body.mergeWithLocal !== false;
-  const defaultCountry =
-    typeof body.defaultCountry === 'string' && body.defaultCountry.length === 2
-      ? (body.defaultCountry.toUpperCase() as CountryCode)
-      : 'US';
-
-  let userContent = text.trim().slice(0, 12000);
-  if (text.length > 12000) userContent += '\n\n[Text was truncated.]';
+  const requestId = getOrCreateRequestId(request);
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userContent },
-      ],
-      temperature: 0.15,
-      max_tokens: 800,
-    });
+    const limited = await guardExtractEntitiesRateLimit(request);
+    if (limited) {
+      limited.headers.set('X-Request-Id', requestId);
+      return limited;
+    }
 
-    const content = completion.choices?.[0]?.message?.content ?? null;
-    const parsed = parseJsonFromResponse(content);
-    const nerOnly = nerJsonToExtracted(parsed);
+    const openai = process.env.OPENAI_API_KEY
+      ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+      : null;
 
-    const localOnly = extractEntities(text, defaultCountry);
-    const entities = mergeWithLocal ? mergeExtractedEntities(localOnly, nerOnly) : nerOnly;
+    if (!openai) {
+      log.error('misconfiguration', { requestId, code: 'no_openai_key' });
+      return jsonClientError(
+        requestId,
+        'Entity extraction is not configured. Please try again later.',
+        503,
+        'service_unavailable'
+      );
+    }
 
-    return NextResponse.json({
-      entities,
-      source: mergeWithLocal ? 'openai+local' : 'openai',
-    });
-  } catch (err: unknown) {
-    const e = err as { status?: number; message?: string; code?: string };
-    console.error('OpenAI extract-entities error:', err);
-    const status = e?.status === 429 ? 429 : e?.status === 401 ? 401 : 502;
-    return NextResponse.json(
-      { error: e?.message || 'Entity extraction failed. Please try again.', code: e?.code },
-      { status }
-    );
+    let body: { text?: string; mergeWithLocal?: boolean; defaultCountry?: string };
+    try {
+      body = await request.json();
+    } catch {
+      return jsonClientError(requestId, 'Invalid JSON body.', 400);
+    }
+
+    const text = body?.text;
+    if (typeof text !== 'string' || !text.trim()) {
+      return jsonClientError(requestId, 'Missing or invalid "text" in request body.', 400);
+    }
+
+    const mergeWithLocal = body.mergeWithLocal !== false;
+    const defaultCountry =
+      typeof body.defaultCountry === 'string' && body.defaultCountry.length === 2
+        ? (body.defaultCountry.toUpperCase() as CountryCode)
+        : 'US';
+
+    let userContent = text.trim().slice(0, 12000);
+    if (text.length > 12000) userContent += '\n\n[Text was truncated.]';
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
+        temperature: 0.15,
+        max_tokens: 800,
+      });
+
+      const content = completion.choices?.[0]?.message?.content ?? null;
+      const parsed = parseJsonFromResponse(content);
+      const nerOnly = nerJsonToExtracted(parsed);
+
+      const localOnly = extractEntities(text, defaultCountry);
+      const entities = mergeWithLocal ? mergeExtractedEntities(localOnly, nerOnly) : nerOnly;
+
+      return jsonOk(requestId, {
+        entities,
+        source: mergeWithLocal ? 'openai+local' : 'openai',
+      });
+    } catch (err: unknown) {
+      const e = err as { status?: number; message?: string; code?: string };
+      if (e?.status === 429) {
+        return jsonUpstreamError(requestId, 'api:extract-entities', err, {
+          status: 429,
+          userMessage: 'Service is busy. Please wait and try again.',
+          code: e?.code ?? 'rate_limited',
+          provider: 'openai',
+        });
+      }
+      if (e?.status === 401) {
+        return jsonUpstreamError(requestId, 'api:extract-entities', err, {
+          status: 503,
+          userMessage: USER_SAFE.ENTITY_UNAVAIL,
+          code: 'upstream_auth',
+          provider: 'openai',
+        });
+      }
+      return jsonUpstreamError(requestId, 'api:extract-entities', err, {
+        status: 502,
+        userMessage: USER_SAFE.ENTITY_UNAVAIL,
+        code: e?.code,
+        provider: 'openai',
+      });
+    }
+  } catch (cause) {
+    return jsonInternalError(requestId, 'api:extract-entities', cause);
   }
 }

@@ -12,17 +12,19 @@ import {
   Copy,
   AlertOctagon,
   ShieldCheck,
+  ChevronDown,
 } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { useSubscription } from '@clerk/nextjs/experimental';
 import { Breadcrumbs, breadcrumbIcons } from '@/components/Breadcrumbs';
 import { ReportActions } from '@/components/ReportActions';
 import { ScamAlerts } from '@/components/ScamAlerts';
-import { AnalysisSkeleton } from '@/components/AnalysisSkeleton';
+import { AnalysisLoadingState } from '@/components/AnalysisLoadingState';
 import { HighlightedSourceText } from '@/components/analysis/HighlightedSourceText';
 import { VerificationRunway } from '@/components/analysis/VerificationRunway';
 import { InboundEmailCallout } from '@/components/InboundEmailCallout';
 import { ContextualHelp } from '@/components/ContextualHelp';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { useToast } from '@/context/ToastContext';
 import { useTour } from '@/context/TourContext';
 import { CONTENT_MAX_W } from '@/lib/constants';
@@ -36,6 +38,93 @@ import { sampleScans } from '@/lib/data/sampleScans';
 import type { AnalysisResult } from '@/lib/types';
 
 const VIEW_ENTRY_KEY = 'scamshield_view_entry';
+
+type ResultSectionId = 'summary' | 'whyRisky' | 'source' | 'runway' | 'entities' | 'redFlags' | 'advice';
+
+const DEFAULT_SCANNER_SECTIONS_OPEN: Record<ResultSectionId, boolean> = {
+  summary: true,
+  whyRisky: false,
+  source: false,
+  runway: false,
+  entities: false,
+  redFlags: false,
+  advice: false,
+};
+
+function ScannerCollapsibleSection({
+  sectionId,
+  title,
+  summary,
+  isOpen,
+  onToggle,
+  textPrimary,
+  textMuted,
+  cardBg,
+  cardBorder,
+  children,
+  headerStart,
+  headerEnd,
+  panelClassName,
+  surfaceClassName,
+  titleClassName,
+  headingClassName,
+}: {
+  sectionId: ResultSectionId;
+  title: string;
+  summary: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  textPrimary: string;
+  textMuted: string;
+  cardBg: string;
+  cardBorder: string;
+  children: React.ReactNode;
+  headerStart?: React.ReactNode;
+  headerEnd?: React.ReactNode;
+  panelClassName?: string;
+  /** If set, replaces default card surface (e.g. gradient panels). */
+  surfaceClassName?: string;
+  titleClassName?: string;
+  /** When set, replaces default small-caps heading styles (e.g. Red flags panel). */
+  headingClassName?: string;
+}) {
+  const surface = surfaceClassName ?? `${cardBg} border ${cardBorder}`;
+  const headerHover = 'hover:bg-slate-500/5 dark:hover:bg-slate-400/5';
+  const headingCls =
+    headingClassName ?? `${titleClassName ?? textMuted} text-xs font-bold uppercase tracking-wider shrink-0`;
+  return (
+    <div className={`${surface} rounded-2xl overflow-hidden ${panelClassName ?? ''}`}>
+      <div className={`flex items-center rounded-t-2xl ${headerHover}`}>
+        <div className="min-w-0 flex-1">
+          <Tooltip label={summary} multiline fullWidth side="top">
+            <button
+              type="button"
+              id={`scanner-section-${sectionId}`}
+              aria-expanded={isOpen}
+              aria-controls={`scanner-section-${sectionId}-panel`}
+              onClick={onToggle}
+              className={`w-full flex items-center justify-between gap-3 text-left py-4 transition-colors ${headerEnd != null ? 'rounded-tl-2xl pl-6 pr-3' : 'rounded-t-2xl px-6'}`}
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                {headerStart}
+                <h3 className={headingCls}>{title}</h3>
+              </span>
+              <ChevronDown className={`w-5 h-5 shrink-0 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden />
+            </button>
+          </Tooltip>
+        </div>
+        {headerEnd != null ? (
+          <div className="flex shrink-0 items-center rounded-tr-2xl pr-5 py-4 pl-1">{headerEnd}</div>
+        ) : null}
+      </div>
+      {isOpen && (
+        <div id={`scanner-section-${sectionId}-panel`} role="region" aria-labelledby={`scanner-section-${sectionId}`} className="px-6 pb-6 pt-0">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function DashboardClient() {
   const searchParams = useSearchParams();
@@ -54,6 +143,8 @@ export default function DashboardClient() {
   const [dragActive, setDragActive] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [historyEntry, setHistoryEntry] = useState<{ id: string; date: string; snippet: string; risk_score: number; risk_level: AnalysisResult['risk_level']; scam_type: string; fullResult: AnalysisResult } | null>(null);
+
+  const [openScannerSections, setOpenScannerSections] = useState(DEFAULT_SCANNER_SECTIONS_OPEN);
 
   const theme = getStoredTheme();
   const isDark = getEffectiveTheme(theme) === 'dark';
@@ -105,6 +196,10 @@ export default function DashboardClient() {
       // ignore
     }
   }, []);
+
+  useEffect(() => {
+    if (result) setOpenScannerSections({ ...DEFAULT_SCANNER_SECTIONS_OPEN });
+  }, [result]);
 
   const handleAnalyze = async () => {
     const textToAnalyze = inputText?.trim() || (fileName ? 'image_analysis_placeholder' : '');
@@ -159,7 +254,7 @@ export default function DashboardClient() {
       )}
 
       {analyzing ? (
-        <AnalysisSkeleton isDark={isDark} />
+        <AnalysisLoadingState isDark={isDark} />
       ) : result ? (
         <div className="space-y-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -201,28 +296,79 @@ export default function DashboardClient() {
             </div>
 
             <div className="md:col-span-7 space-y-6">
-              <div className={`${cardBg} border rounded-2xl p-6 ${cardBorder}`}>
-                <h3 className={`${textMuted} text-xs font-bold uppercase tracking-wider mb-3`}>Analysis Summary</h3>
+              <ScannerCollapsibleSection
+                sectionId="summary"
+                title="Analysis Summary"
+                summary="Plain-language verdict: what the model concluded about this message and how serious it looks overall."
+                isOpen={openScannerSections.summary}
+                onToggle={() => setOpenScannerSections((s) => ({ ...s, summary: !s.summary }))}
+                textPrimary={textPrimary}
+                textMuted={textMuted}
+                cardBg={cardBg}
+                cardBorder={cardBorder}
+              >
                 <p className={`${textPrimary} leading-relaxed text-lg`}>{result.verdict_summary}</p>
-              </div>
+              </ScannerCollapsibleSection>
               {result.why_risky && (
-                <div className={`${cardBg} border rounded-2xl p-6 ${cardBorder}`}>
-                  <h3 className={`${textMuted} text-xs font-bold uppercase tracking-wider mb-3`}>Why this is risky</h3>
+                <ScannerCollapsibleSection
+                  sectionId="whyRisky"
+                  title="Why this is risky"
+                  summary="How typical scam patterns, pressure tactics, or suspicious claims show up in this specific text."
+                  isOpen={openScannerSections.whyRisky}
+                  onToggle={() => setOpenScannerSections((s) => ({ ...s, whyRisky: !s.whyRisky }))}
+                  textPrimary={textPrimary}
+                  textMuted={textMuted}
+                  cardBg={cardBg}
+                  cardBorder={cardBorder}
+                >
                   <p className={`${textPrimary} leading-relaxed`}>{result.why_risky}</p>
-                </div>
+                </ScannerCollapsibleSection>
               )}
-              <HighlightedSourceText sourceText={inputText} result={result} isDark={isDark} />
-
-              <VerificationRunway
-                entities={result.entities}
-                riskScore={result.risk_score}
-                isDark={isDark}
-                scanId={historyEntry?.id}
-              />
-
+              {inputText.trim() && (
+                <ScannerCollapsibleSection
+                  sectionId="source"
+                  title="Source text"
+                  summary="Your pasted message with risky phrases highlighted so you can see exactly what triggered the analysis."
+                  isOpen={openScannerSections.source}
+                  onToggle={() => setOpenScannerSections((s) => ({ ...s, source: !s.source }))}
+                  textPrimary={textPrimary}
+                  textMuted={textMuted}
+                  cardBg={cardBg}
+                  cardBorder={cardBorder}
+                >
+                  <HighlightedSourceText sourceText={inputText} result={result} isDark={isDark} />
+                </ScannerCollapsibleSection>
+              )}
+              <ScannerCollapsibleSection
+                sectionId="runway"
+                title="Verification checklist"
+                summary="Practical steps: web searches and checks you can run on links, orgs, and claims before you trust or reply."
+                isOpen={openScannerSections.runway}
+                onToggle={() => setOpenScannerSections((s) => ({ ...s, runway: !s.runway }))}
+                textPrimary={textPrimary}
+                textMuted={textMuted}
+                cardBg={cardBg}
+                cardBorder={cardBorder}
+              >
+                <VerificationRunway
+                  entities={result.entities}
+                  riskScore={result.risk_score}
+                  isDark={isDark}
+                  scanId={historyEntry?.id}
+                />
+              </ScannerCollapsibleSection>
               {result.entities && (
-                <div className={`${cardBg} border rounded-2xl p-6 ${cardBorder}`}>
-                  <h3 className={`${textMuted} text-xs font-bold uppercase tracking-wider mb-3`}>Extracted details</h3>
+                <ScannerCollapsibleSection
+                  sectionId="entities"
+                  title="Extracted details"
+                  summary="Names, emails, phones, addresses, and businesses detected in the message—use these with the checklist to verify."
+                  isOpen={openScannerSections.entities}
+                  onToggle={() => setOpenScannerSections((s) => ({ ...s, entities: !s.entities }))}
+                  textPrimary={textPrimary}
+                  textMuted={textMuted}
+                  cardBg={cardBg}
+                  cardBorder={cardBorder}
+                >
                   <p className={`text-sm mb-4 ${textDim}`}>
                     Raw fields from your message. Use the verification checklist above for step-by-step checks.
                   </p>
@@ -253,15 +399,23 @@ export default function DashboardClient() {
                       <div className="text-slate-500">No validation hints provided.</div>
                     )}
                   </div>
-                </div>
+                </ScannerCollapsibleSection>
               )}
-
-              <div className={`${cardBg} border rounded-2xl p-6 ${cardBorder} ${isDark ? 'bg-gradient-to-r from-slate-900 to-slate-800 border-slate-700' : 'border-slate-200'}`}>
-                <div className="flex items-center gap-2 mb-4">
-                  <AlertOctagon className="w-5 h-5 text-red-500" />
-                  <h3 className={`font-bold ${textPrimary}`}>Red Flags</h3>
-                  <ContextualHelp title="What are red flags?" content="Specific reasons this message was flagged." isDark={isDark} />
-                </div>
+              <ScannerCollapsibleSection
+                sectionId="redFlags"
+                title="Red Flags"
+                summary="Specific warning signs that increased the score—each is a reason to slow down and verify before acting."
+                isOpen={openScannerSections.redFlags}
+                onToggle={() => setOpenScannerSections((s) => ({ ...s, redFlags: !s.redFlags }))}
+                textPrimary={textPrimary}
+                textMuted={textMuted}
+                cardBg={cardBg}
+                cardBorder={cardBorder}
+                surfaceClassName={`${cardBg} border ${cardBorder} ${isDark ? 'bg-gradient-to-r from-slate-900 to-slate-800 border-slate-700' : 'border-slate-200'}`}
+                headingClassName={`font-bold ${textPrimary} shrink-0`}
+                headerStart={<AlertOctagon className="w-5 h-5 text-red-500 shrink-0" aria-hidden />}
+                headerEnd={<ContextualHelp title="What are red flags?" content="Specific reasons this message was flagged." isDark={isDark} />}
+              >
                 <div className="space-y-2">
                   {result.red_flags.map((flag, i) => (
                     <div key={i} className={`p-3 rounded-lg border text-sm flex items-start gap-2 ${isDark ? 'bg-slate-900 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
@@ -270,23 +424,37 @@ export default function DashboardClient() {
                     </div>
                   ))}
                 </div>
-              </div>
-              <div className={`p-6 rounded-2xl border ${isDark ? 'bg-gradient-to-r from-slate-900 to-slate-800 border-slate-600' : 'bg-teal-50/80 border-teal-100'}`}>
-                <h3 className="text-teal-800 dark:text-teal-300 font-bold mb-2 uppercase text-xs tracking-wider">Recommended Action</h3>
+              </ScannerCollapsibleSection>
+              <ScannerCollapsibleSection
+                sectionId="advice"
+                title="Recommended Action"
+                summary="Practical next steps: what we suggest you do or avoid based on the risk level and flags above."
+                isOpen={openScannerSections.advice}
+                onToggle={() => setOpenScannerSections((s) => ({ ...s, advice: !s.advice }))}
+                textPrimary={textPrimary}
+                textMuted={textMuted}
+                cardBg={cardBg}
+                cardBorder={cardBorder}
+                surfaceClassName={isDark ? 'border border-slate-600 bg-gradient-to-r from-slate-900 to-slate-800' : 'border border-teal-100 bg-teal-50/80'}
+                headingClassName="text-teal-800 dark:text-teal-300 font-bold uppercase text-xs tracking-wider shrink-0"
+              >
                 <p className={`font-medium ${textPrimary}`}>{result.advice}</p>
-              </div>
+              </ScannerCollapsibleSection>
             </div>
           </div>
+          <InboundEmailCallout isDark={isDark} />
         </div>
       ) : (
         <div className="max-w-3xl mx-auto space-y-8">
           <div className="text-center">
             <h1 className={`text-3xl font-bold mb-2 ${textPrimary}`}>Scanner Dashboard</h1>
-            <p className={textMuted}>Paste text or upload a screenshot to begin analysis.</p>
+            <p className={textMuted}>Paste text or upload a screenshot to begin analysis—or forward a suspicious email using the address below.</p>
             {!hasCompletedTour && (
               <button type="button" onClick={startTour} className="mt-2 text-sm text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 font-medium">Take the tour</button>
             )}
           </div>
+
+          <InboundEmailCallout isDark={isDark} />
 
           <div className={`${cardBg} border rounded-2xl p-2 shadow-2xl ${cardBorder}`} data-tour-id="tour-paste">
             <div className="relative">
@@ -323,7 +491,6 @@ export default function DashboardClient() {
           </div>
 
           <div className="max-w-3xl mx-auto space-y-4">
-            <InboundEmailCallout isDark={isDark} />
             <ScamAlerts isDark={isDark} />
           </div>
 
