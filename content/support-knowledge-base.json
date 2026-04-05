@@ -1,0 +1,474 @@
+{
+  "schemaVersion": "1.0",
+  "meta": {
+    "appName": "ScamShield",
+    "appNameStyled": "ScamShield AI",
+    "tagline": "AI-powered scam and fraud detection for messages, emails, and texts.",
+    "lastUpdated": "2026-03-28",
+    "primaryLocale": "en",
+    "disclaimer": "ScamShield provides informational analysis only. It is not legal, financial, or professional security advice. Always use your own judgment and verify important requests through trusted channels.",
+    "seoKeywords": [
+      "ScamShield",
+      "scam detector",
+      "phishing detection",
+      "AI fraud detection",
+      "email scam checker",
+      "text message scam",
+      "romance scam detection",
+      "fake invoice scam",
+      "risk score",
+      "scam red flags",
+      "forward email to scan",
+      "online safety",
+      "cybersecurity for consumers",
+      "fraud prevention app"
+    ]
+  },
+  "navigationHints": {
+    "description": "Stable paths relative to your site origin for CTAs and deep links.",
+    "routes": {
+      "home": "/",
+      "scanner": "/dashboard",
+      "history": "/history",
+      "community": "/community",
+      "pricing": "/pricing"
+    }
+  },
+  "sections": [
+    {
+      "id": "overview",
+      "title": "Overview of ScamShield",
+      "summary": "What the app is, who it helps, and the main benefits.",
+      "subsections": [
+        {
+          "id": "what-is-scamshield",
+          "heading": "What is ScamShield?",
+          "body": "ScamShield is a web application that analyzes suspicious text—such as emails, DMs, dating-app messages, or social posts—using AI to estimate scam risk and explain why something might be dangerous. It is designed for everyday users who want a quick, understandable second opinion before they click links, send money, or share personal information.",
+          "bullets": [
+            "Built for speed: most analyses return in seconds.",
+            "Explains **risk score** (0–100) and lists concrete **red flags**.",
+            "Supports pasted text and **screenshot / image uploads** for visual cues (e.g. fake branding).",
+            "Optional **email-to-scan**: forward or BCC a suspicious message to get a private report link by email.",
+            "**Free** and **Pro** plans so you can start for $0 and upgrade for heavier use."
+          ],
+          "callToAction": {
+            "label": "Open the Scanner",
+            "href": "/dashboard",
+            "keywords": ["start scan", "analyze message"]
+          }
+        },
+        {
+          "id": "primary-features",
+          "heading": "Primary features",
+          "body": "These capabilities work together to help you spot social engineering and common fraud patterns.",
+          "bullets": [
+            "**Deep text forensics** – Detects linguistic triggers, urgency, and script-like patterns often used by scammers.",
+            "**Visual analysis** – Upload screenshots; the system can look for visual inconsistencies that may indicate forgery.",
+            "**Instant verdicts** – Risk score, risk level, scam type hints, and practical **next steps**.",
+            "**Highlighted source** – Review the original text with emphasis on suspicious segments (when shown in the UI).",
+            "**Verification runway** – Structured checks around extracted entities such as URLs, names, and places (where available).",
+            "**Scan history** – Review past scans; saving behavior aligns with your plan and local storage (see Privacy).",
+            "**Community scam reports** – Share anonymized examples stored locally in your browser to learn from patterns (optional).",
+            "**Optional browser extension** – Select text on any page and open ScamShield with that text pre-filled (advanced users; see project extension docs)."
+          ]
+        },
+        {
+          "id": "benefits",
+          "heading": "Benefits for you",
+          "bullets": [
+            "**Confidence** – Turn vague worry into specific reasons something looks risky.",
+            "**Education** – Red flags help you recognize similar scams later without re-scanning every message.",
+            "**Convenience** – Scan from the web app or forward email without installing desktop software.",
+            "**Layered defense** – Use ScamShield alongside spam filters, bank alerts, and common sense—not as a replacement for them."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "getting-started",
+      "title": "Getting started",
+      "summary": "From first visit to your first scan and optional Pro setup.",
+      "subsections": [
+        {
+          "id": "quick-start-web",
+          "heading": "Quick start (web scanner)",
+          "numberedSteps": [
+            "Open the **Scanner** from the main navigation (`/dashboard`).",
+            "Paste suspicious **text** into the input area, or **upload** a screenshot if the message is easier to capture as an image.",
+            "Select **Scan** and wait a few seconds for the AI analysis to complete.",
+            "Review the **risk score**, **summary**, and expandable sections (e.g. red flags, advice, verification tools).",
+            "**Optional:** Sign in (top right) to associate scans with your account where the app requires it for limits or saved history.",
+            "**Optional:** Visit **History** (`/history`) after signing in to revisit prior results (availability may depend on plan and local storage)."
+          ],
+          "tips": [
+            "Include the **full message** (headers are not required for a quick check; more context generally improves analysis).",
+            "Remove unrelated chat history if the paste is very long, but keep the scammer’s exact wording.",
+            "If you use **email forwarding**, use the address shown on the Scanner page so you always have the current inbox for your deployment."
+          ],
+          "callToAction": {
+            "label": "Go to Scanner",
+            "href": "/dashboard"
+          }
+        },
+        {
+          "id": "email-to-scan",
+          "heading": "Scan via email (forward or BCC)",
+          "body": "You can forward a suspicious email (or BCC ScamShield) to the dedicated address displayed on the Scanner dashboard. The service analyzes the message body and emails you back a **private link** to a full report.",
+          "bullets": [
+            "The exact address is shown in the **“Forward suspicious email”** callout on `/dashboard` (it may be customized per deployment via environment configuration).",
+            "Report links are **time-limited** (on the order of several days)—open the link soon after you receive it.",
+            "If you do not receive a reply, check spam/junk folders and verify you used the correct forwarding address."
+          ],
+          "callToAction": {
+            "label": "Open Scanner for the current forwarding address",
+            "href": "/dashboard"
+          }
+        },
+        {
+          "id": "account-and-theme",
+          "heading": "Account, sign-in, and appearance",
+          "bullets": [
+            "Use **Sign in** / **Sign up** in the header to create or access your account (powered by Clerk).",
+            "Use **Settings** (gear icon) to switch **theme** (e.g. light/dark) and other preferences available in your build.",
+            "After subscribing to **Pro**, return to the Scanner; successful checkout typically returns via `?subscription=success` and refreshes your plan status."
+          ]
+        },
+        {
+          "id": "plans-overview",
+          "heading": "Plans at a glance",
+          "body": "ScamShield offers a simple two-tier model.",
+          "bullets": [
+            "**Free** – Approximately **one scan per day** (daily limit per user/session rules in the app). No credit card required.",
+            "**Pro** – **Unlimited scans**, full analysis, **history** workflows, **PDF reports**, billed monthly (pricing shown on `/pricing`, typically around **$8.99/mo**—confirm on the live pricing page)."
+          ],
+          "callToAction": {
+            "label": "View pricing and upgrade",
+            "href": "/pricing",
+            "keywords": ["upgrade", "Pro", "unlimited scans subscription"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "using-results",
+      "title": "Understanding your results",
+      "summary": "How to read scores, flags, and follow-up actions safely.",
+      "subsections": [
+        {
+          "id": "risk-score-and-level",
+          "heading": "Risk score and risk level",
+          "body": "The **risk score** is a number from **0 to 100**. Higher scores mean the model believes the content is **more likely** to be a scam, based on language patterns, urgency, known scam scripts, and related signals. **Risk level** groups that score into human-friendly categories (e.g. low / medium / high—exact labels follow the live UI).",
+          "bullets": [
+            "The score is a **model estimate**, not a guarantee.",
+            "Legitimate urgent messages (e.g. from your bank’s real app) can occasionally look “hot” to NLP—**verify through a known channel** before acting."
+          ]
+        },
+        {
+          "id": "red-flags",
+          "heading": "Red flags",
+          "body": "**Red flags** are short, specific reasons the model flagged the message—such as requests for gift cards, pressure to act immediately, impersonation language, or suspicious payment flows. Use them as a teaching checklist for future messages."
+        },
+        {
+          "id": "next-steps",
+          "heading": "Recommended next steps",
+          "body": "Follow the in-app **advice** and verification tools when present. General safe habits:",
+          "bullets": [
+            "Contact institutions using **phone numbers or sites you look up yourself**, not numbers or links from the message.",
+            "Do not pay, share passwords, or install remote-access software because someone demanded it in chat.",
+            "Report fraud to your **bank**, **platform**, or local **consumer protection** agency as appropriate for your region."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "privacy-and-security",
+      "title": "Privacy, data, and security",
+      "summary": "What happens to your text and how limits protect the service.",
+      "subsections": [
+        {
+          "id": "data-handling",
+          "heading": "What we store and why",
+          "bullets": [
+            "Pasted content is analyzed in **real time**; ScamShield **does not sell** your pasted text for marketing.",
+            "**Pro** users may **optionally** keep **scan history locally** in the browser—this is device-specific and under your control.",
+            "**Community posts** you create are stored **locally in your browser** only (they are not a global server-side forum in the default app).",
+            "**Email-to-scan** flows create a **time-limited report** reachable via a token link so you can open results on another device."
+          ]
+        },
+        {
+          "id": "rate-limits",
+          "heading": "Fair use and rate limits",
+          "body": "API routes apply **rate limits** per signed-in user or guest IP-derived bucket to keep the service reliable. If you hit a limit, wait until the window resets or **sign in** with a different network if you share an IP with many people.",
+          "bullets": [
+            "HTTP **429** responses may include **Retry-After** guidance.",
+            "Typical documented caps include on the order of **12 analyze requests per minute** per subject (see your deployment’s README for exact numbers)."
+          ]
+        }
+      ]
+    }
+  ],
+  "troubleshooting": [
+    {
+      "id": "daily-limit-reached",
+      "symptom": "I used my free scan and cannot run another until tomorrow.",
+      "category": "billing_limits",
+      "severity": "low",
+      "explanation": "The Free tier is intentionally limited (approximately one scan per day per the app’s free-tier logic).",
+      "solutions": [
+        "Wait until the next calendar day and try again.",
+        "Upgrade to **Pro** for unlimited scans (`/pricing`).",
+        "If you believe the counter is wrong, sign in on a single account consistently—limits are tracked per user/session rules in the app."
+      ],
+      "relatedLinks": [{ "label": "Pricing", "href": "/pricing" }]
+    },
+    {
+      "id": "scan-fails-or-errors",
+      "symptom": "The scan button fails, shows an error, or never finishes.",
+      "category": "technical",
+      "severity": "medium",
+      "solutions": [
+        "Check your **internet connection** and refresh the page.",
+        "Shorten extremely long pastes; try the **most relevant** portion of the message first.",
+        "If an image upload fails, try a **smaller** file or a clearer screenshot.",
+        "Wait a few minutes in case of temporary **API maintenance** or **rate limiting** (429).",
+        "Ensure you are not blocking cookies or scripts required for sign-in if the route needs authentication."
+      ],
+      "relatedLinks": [{ "label": "Scanner", "href": "/dashboard" }]
+    },
+    {
+      "id": "rate-limit-429",
+      "symptom": "I see a rate limit or “too many requests” message.",
+      "category": "technical",
+      "severity": "low",
+      "solutions": [
+        "Pause scanning for the period indicated by **Retry-After** (if shown).",
+        "Avoid rapidly re-submitting the same text.",
+        "On shared networks (coffee shop, office), many guests may share one public IP—limits may aggregate there.",
+        "Sign in with your own account when possible so limits apply per **user** rather than only IP heuristics."
+      ]
+    },
+    {
+      "id": "pro-not-recognized",
+      "symptom": "I paid for Pro but still see Free limits or missing Pro features.",
+      "category": "billing_account",
+      "severity": "medium",
+      "solutions": [
+        "Return to the app via the **success** redirect (`/dashboard?subscription=success`) and wait for subscription metadata to refresh.",
+        "**Sign out and sign in** again to refresh your session.",
+        "Confirm you used the **same email/account** you subscribed with.",
+        "Allow a minute for **webhook processing** between Stripe and your user profile (Clerk metadata) in production.",
+        "If the issue persists after an hour, contact support with your account email and payment confirmation."
+      ],
+      "relatedLinks": [{ "label": "Pricing", "href": "/pricing" }]
+    },
+    {
+      "id": "email-report-not-received",
+      "symptom": "I forwarded email to ScamShield but got no response link.",
+      "category": "email_inbound",
+      "severity": "medium",
+      "solutions": [
+        "Verify you used the **current** address from the Scanner dashboard (not an old screenshot or blog post).",
+        "Check **spam/junk** for the reply.",
+        "Ensure your forward preserved **message body** content (some clients forward as attachment only—try “forward as inline” if available).",
+        "Retry with a smaller test message to confirm the pipeline; if still failing, the deployment may lack inbound email or email-sending configuration—contact the site operator."
+      ],
+      "relatedLinks": [{ "label": "Scanner (forwarding instructions)", "href": "/dashboard" }]
+    },
+    {
+      "id": "report-link-expired",
+      "symptom": "My emailed report link says expired or invalid.",
+      "category": "email_inbound",
+      "severity": "low",
+      "explanation": "Email report URLs are **time-limited** (roughly **seven days** in typical deployments) for privacy and storage hygiene.",
+      "solutions": [
+        "Re-run the analysis by forwarding the email again or pasting the content into the Scanner.",
+        "Open links promptly after receiving them."
+      ]
+    },
+    {
+      "id": "history-missing",
+      "symptom": "I cannot find an old scan in History.",
+      "category": "features",
+      "severity": "low",
+      "solutions": [
+        "Confirm you are **signed in** and on the correct browser profile.",
+        "History may rely on **local storage**—clearing site data or using private browsing removes entries.",
+        "**Pro** features like PDF exports depend on an active plan—confirm subscription status (`/pricing`)."
+      ],
+      "relatedLinks": [{ "label": "History", "href": "/history" }]
+    },
+    {
+      "id": "wrong-verdict",
+      "symptom": "ScamShield marked a safe message as risky (or missed a scam).",
+      "category": "accuracy",
+      "severity": "low",
+      "explanation": "No AI detector is **100% accurate**. ScamShield is optimized for common fraud patterns but can false-positive or false-negative.",
+      "solutions": [
+        "Read **red flags** and decide whether they truly apply to your situation.",
+        "Verify the sender through an **independent channel** before sending money or data.",
+        "Try scanning a **cleaned** version of the text with extra context (or split long threads).",
+        "Treat the tool as **one signal** among many—not the final word."
+      ]
+    },
+    {
+      "id": "clerk-signin-issues",
+      "symptom": "Sign-in or sign-up modal fails or loops.",
+      "category": "authentication",
+      "severity": "medium",
+      "solutions": [
+        "Disable aggressive **ad blockers** or script blockers for this site.",
+        "Try another browser or **incognito** mode to rule out extensions.",
+        "Clear **cookies** for the site domain and retry.",
+        "If your organization manages SSO, follow your IT department’s guidance; otherwise use **forgot password** flows offered by the auth provider."
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "id": "what-is-risk-score",
+      "question": "What is the risk score?",
+      "answer": "The risk score is a number from 0 to 100 that indicates how likely a message is to be a scam. Higher scores mean higher risk. ScamShield uses AI to analyze language patterns, urgency, and common scam phrases to calculate this.",
+      "keywords": ["risk score meaning", "0 to 100", "how risk is calculated"]
+    },
+    {
+      "id": "what-are-red-flags",
+      "question": "What are red flags?",
+      "answer": "Red flags are specific reasons a message was flagged as suspicious. They are listed so you can see exactly what triggered the warning and learn recognizable scam patterns.",
+      "keywords": ["warnings", "reasons flagged"]
+    },
+    {
+      "id": "data-storage",
+      "question": "Do you store my pasted text?",
+      "answer": "ScamShield does not store your pasted content for marketing or resale. Analysis runs in real time. Pro users can optionally save scan history locally in their browser so past results remain under their control on that device.",
+      "keywords": ["privacy", "GDPR", "data retention", "local storage"]
+    },
+    {
+      "id": "accuracy",
+      "question": "How accurate is ScamShield?",
+      "answer": "The AI is trained on known scam patterns and is strong at spotting common fraud. No tool is 100% accurate. Always combine results with your own judgment and independent verification.",
+      "keywords": ["false positive", "reliability", "trust"]
+    },
+    {
+      "id": "scam-types",
+      "question": "What types of scams can you detect?",
+      "answer": "Common categories include phishing, romance scams, fake invoices, tax or bank impersonation, tech support fraud, lottery or prize scams, and similar social-engineering schemes. Paste any suspicious text, email body, or upload a screenshot for analysis.",
+      "keywords": ["phishing", "romance scam", "IRS scam", "gift cards"]
+    },
+    {
+      "id": "email-forward-scan",
+      "question": "Can I email a message to scan?",
+      "answer": "Yes. Forward the suspicious email (or BCC us) using the address shown on the Scanner. ScamShield analyzes the content and emails you a private link to the full report. Open the link soon—URLs expire after several days.",
+      "keywords": ["forward email", "BCC", "inbound scan"]
+    },
+    {
+      "id": "free-vs-pro",
+      "question": "What is the difference between Free and Pro?",
+      "answer": "Free includes about one scan per day with full text analysis. Pro adds unlimited scans, history workflows, and PDF report export for a monthly subscription—see the live pricing page for current price and feature list.",
+      "keywords": ["upgrade", "$8.99", "unlimited"]
+    },
+    {
+      "id": "screenshots",
+      "question": "Can I upload a screenshot instead of pasting text?",
+      "answer": "Yes. The Scanner supports image uploads so you can capture emails or texts visually. Visual analysis can help spot forged layouts or odd branding—combine it with careful sender verification.",
+      "keywords": ["image upload", "OCR", "visual analysis"]
+    },
+    {
+      "id": "community-local",
+      "question": "Who can see my Community scam reports?",
+      "answer": "In the default app, Community posts are stored locally in your browser—they are not published to a global server feed visible to all users. Use Community as a personal or shared-device scratchpad for patterns you want to remember.",
+      "keywords": ["community page", "share scam", "local only"]
+    },
+    {
+      "id": "legal-disclaimer",
+      "question": "Is this legal or financial advice?",
+      "answer": "No. ScamShield is for informational purposes only. For legal, regulatory, or large-dollar decisions, consult qualified professionals and your financial institution.",
+      "keywords": ["disclaimer", "not legal advice"]
+    }
+  ],
+  "tipsAndShortcuts": [
+    {
+      "title": "Paste the scammer’s exact words",
+      "detail": "Copy/paste beats paraphrasing—subtle urgency and grammar patterns are part of the signal."
+    },
+    {
+      "title": "Keep one thread per scan when possible",
+      "detail": "Long unrelated chats can dilute the model’s focus; trim to the suspicious segment if needed."
+    },
+    {
+      "title": "Use email forwarding for inbox-native workflows",
+      "detail": "If you already live in email, forward to the dashboard-listed address instead of retyping."
+    },
+    {
+      "title": "Pair ScamShield with manual URL checks",
+      "detail": "When the tool surfaces URLs, verify domains by typing known good addresses yourself—not by tapping links in the suspicious message."
+    },
+    {
+      "title": "Browser extension power users",
+      "detail": "Install the optional extension from the project’s `extension` folder: select text on any page and open ScamShield pre-filled (configure APP_ORIGIN to your deployment URL)."
+    },
+    {
+      "title": "Respect daily limits or go Pro",
+      "detail": "If you triage many messages (small business, caregiver), Pro avoids interrupting your workflow at one scan per day."
+    }
+  ],
+  "contactSupport": {
+    "title": "Contact support and additional help",
+    "intro": "Choose the channel that best matches your issue. Include screenshots (redact personal data) and approximate timestamps for faster resolution.",
+    "channels": [
+      {
+        "id": "self-serve",
+        "label": "Self-serve resources",
+        "details": "Revisit this knowledge base, the on-page FAQ on the landing section, and contextual help panels inside the Scanner.",
+        "action": { "label": "Home & product context", "href": "/" }
+      },
+      {
+        "id": "community-peer",
+        "label": "Community (peer notes)",
+        "details": "Share scam patterns on the Community page. Posts are stored locally in your browser in the default app—use it for personal notes and awareness, not as official support.",
+        "action": { "label": "Community scam reports", "href": "/community" }
+      },
+      {
+        "id": "billing-stripe",
+        "label": "Billing and receipts",
+        "details": "Pro subscriptions are processed through Stripe. For card charges, locate your Stripe receipt email or contact support with the last four digits of the card and the charge date. Subscription status syncs to your user profile after successful checkout.",
+        "action": { "label": "View plans", "href": "/pricing" }
+      },
+      {
+        "id": "account-auth",
+        "label": "Sign-in, password, or account access",
+        "details": "Authentication is handled by the app’s identity provider (Clerk). Use in-modal password reset or social login recovery options. If you are locked out entirely, contact support with the email on the account.",
+        "action": { "label": "Try signing in from Scanner", "href": "/dashboard" }
+      },
+      {
+        "id": "operator-contact",
+        "label": "Operator / human support",
+        "details": "Configure this field for your deployment: add your official support email, help desk URL, or ticket system. Example placeholder: support@your-domain.com — replace with your real channel before publishing.",
+        "action": { "label": "Configure NEXT_PUBLIC_SUPPORT_URL or mailto in your deployment", "href": "mailto:support@example.com" }
+      }
+    ],
+    "escalationChecklist": [
+      "Describe what you tried (browser, signed in vs guest, approximate time).",
+      "Include error text or HTTP status if shown (e.g. 429 rate limit).",
+      "Redact passwords, full card numbers, and government IDs from screenshots.",
+      "For email-to-scan failures, note whether other email to your inbox works and whether the forward included body text."
+    ],
+    "relatedArticlesCta": {
+      "label": "Browse troubleshooting topics in this file",
+      "anchor": "troubleshooting"
+    }
+  },
+  "botHints": {
+    "intentMapping": [
+      { "keywords": ["limit", "one scan", "free tier"], "troubleshootingId": "daily-limit-reached" },
+      { "keywords": ["429", "too many requests", "rate"], "troubleshootingId": "rate-limit-429" },
+      { "keywords": ["pro", "paid", "subscription", "still free"], "troubleshootingId": "pro-not-recognized" },
+      { "keywords": ["forward", "email", "bcc", "no reply"], "troubleshootingId": "email-report-not-received" },
+      { "keywords": ["expired link", "report link"], "troubleshootingId": "report-link-expired" },
+      { "keywords": ["history", "past scan"], "troubleshootingId": "history-missing" },
+      { "keywords": ["wrong", "false positive", "inaccurate"], "troubleshootingId": "wrong-verdict" },
+      { "keywords": ["sign in", "login", "clerk"], "troubleshootingId": "clerk-signin-issues" }
+    ],
+    "responseStyle": "professional_friendly",
+    "safetyReminder": "Never instruct users to share passwords, 2FA codes, or full payment details in chat. Direct them to verify requests through official channels."
+  }
+}

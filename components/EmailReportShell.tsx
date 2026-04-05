@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { AlertOctagon, ExternalLink } from 'lucide-react';
 import { HighlightedSourceText } from '@/components/analysis/HighlightedSourceText';
+import { ScanResultEnhancements } from '@/components/analysis/ScanResultEnhancements';
 import { VerificationRunway } from '@/components/analysis/VerificationRunway';
+import { useToast } from '@/context/ToastContext';
 import { SecurityBadges } from '@/components/SecurityBadges';
 import type { StoredEmailReport } from '@/lib/inbound/reportStorage';
 import { CONTENT_MAX_W } from '@/lib/constants';
@@ -11,6 +13,7 @@ import { CONTENT_MAX_W } from '@/lib/constants';
 /** Public report view for email-inbound scans — light, readable layout. */
 export function EmailReportShell({ data, reportToken }: { data: StoredEmailReport; reportToken: string }) {
   const { result, sourceText, subject, createdAt } = data;
+  const toast = useToast();
   const isDark = false;
   const cardBg = 'bg-white';
   const cardBorder = 'border-slate-200';
@@ -87,6 +90,7 @@ export function EmailReportShell({ data, reportToken }: { data: StoredEmailRepor
               <h2 className={`${textMuted} text-xs font-bold uppercase tracking-wider mb-3`}>Summary</h2>
               <p className={`${textPrimary} leading-relaxed text-lg`}>{result.verdict_summary}</p>
             </div>
+            <ScanResultEnhancements result={result} isDark={isDark} onCopy={(m) => toast.showToast(m)} />
             {result.why_risky && (
               <div className={`${cardBg} border rounded-2xl p-6 ${cardBorder}`}>
                 <h2 className={`${textMuted} text-xs font-bold uppercase tracking-wider mb-3`}>Why this is risky</h2>

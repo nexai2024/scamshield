@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 
-import { runAnalyze } from '@/lib/analysis/runAnalyze';
+import { runFullAnalyze } from '@/lib/analysis/runAnalyze';
 import { extractInboundEmailPayload, parseFromAddress } from '@/lib/inbound/parseInboundRequest';
 import { saveEmailReport } from '@/lib/inbound/reportStorage';
 import { sendReportReadyEmail } from '@/lib/inbound/sendReportReadyEmail';
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const outcome = await runAnalyze(body);
+  const outcome = await runFullAnalyze({ text: body });
   if (!outcome.ok) {
     const status =
       outcome.code === 'no_api_key'

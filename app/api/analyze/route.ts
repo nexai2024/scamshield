@@ -1,4 +1,4 @@
-import { runAnalyze } from '@/lib/analysis/runAnalyze';
+import { runFullAnalyze } from '@/lib/analysis/runAnalyze';
 import { guardAnalyzeRateLimit } from '@/lib/rateLimit/guard';
 import {
   getOrCreateRequestId,
@@ -12,6 +12,9 @@ import { createLogger } from '@/lib/server/logger';
 
 const log = createLogger('api:analyze');
 
+/** Link expansion + RDAP can take longer than the default function timeout on some hosts. */
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   const requestId = getOrCreateRequestId(request);
 
@@ -22,19 +25,33 @@ export async function POST(request: Request) {
       return limited;
     }
 
-    let body: { text?: string };
+    let body: { text?: string; imageBase64?: string; imageMimeType?: string };
     try {
       body = await request.json();
     } catch {
       return jsonClientError(requestId, 'Invalid JSON body.', 400);
     }
 
-    const text = body?.text;
-    if (typeof text !== 'string' || !text.trim()) {
-      return jsonClientError(requestId, 'Missing or invalid "text" in request body.', 400);
+    const text = typeof body?.text === 'string' ? body.text : '';
+    const imageBase64 =
+      typeof body?.imageBase64 === 'string' && body.imageBase64.length > 0 ? body.imageBase64 : undefined;
+    const imageMimeType =
+      typeof body?.imageMimeType === 'string' && body.imageMimeType.length > 0 ? body.imageMimeType : undefined;
+
+    const MAX_IMAGE_B64_CHARS = 5_500_000;
+    if (imageBase64 && imageBase64.length > MAX_IMAGE_B64_CHARS) {
+      return jsonClientError(requestId, 'Image is too large. Try a smaller screenshot (under ~4 MB).', 413, 'payload_too_large');
     }
 
-    const outcome = await runAnalyze(text);
+    if (!text.trim() && !imageBase64) {
+      return jsonClientError(
+        requestId,
+        'Provide non-empty "text" and/or "imageBase64" (screenshot) in the request body.',
+        400
+      );
+    }
+
+    const outcome = await runFullAnalyze({ text, imageBase64, imageMimeType });
     if (!outcome.ok) {
       if (outcome.code === 'no_api_key') {
         log.error('misconfiguration', { requestId, code: 'no_api_key' });

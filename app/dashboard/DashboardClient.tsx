@@ -21,6 +21,7 @@ import { ReportActions } from '@/components/ReportActions';
 import { ScamAlerts } from '@/components/ScamAlerts';
 import { AnalysisLoadingState } from '@/components/AnalysisLoadingState';
 import { HighlightedSourceText } from '@/components/analysis/HighlightedSourceText';
+import { ScanResultEnhancements } from '@/components/analysis/ScanResultEnhancements';
 import { VerificationRunway } from '@/components/analysis/VerificationRunway';
 import { InboundEmailCallout } from '@/components/InboundEmailCallout';
 import { ContextualHelp } from '@/components/ContextualHelp';
@@ -141,7 +142,7 @@ export default function DashboardClient() {
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [historyEntry, setHistoryEntry] = useState<{ id: string; date: string; snippet: string; risk_score: number; risk_level: AnalysisResult['risk_level']; scam_type: string; fullResult: AnalysisResult } | null>(null);
 
   const [openScannerSections, setOpenScannerSections] = useState(DEFAULT_SCANNER_SECTIONS_OPEN);
@@ -202,16 +203,45 @@ export default function DashboardClient() {
   }, [result]);
 
   const handleAnalyze = async () => {
-    const textToAnalyze = inputText?.trim() || (fileName ? 'image_analysis_placeholder' : '');
-    if (!textToAnalyze) return;
+    const typed = inputText?.trim() ?? '';
+    if (!typed && !imageFile) return;
     if (!canScan) {
       window.location.href = '/pricing';
+      return;
+    }
+    if (imageFile && imageFile.size > 4 * 1024 * 1024) {
+      toast.showToast('Screenshot too large (max 4 MB). Try cropping or a smaller image.', 'error');
       return;
     }
     setAnalyzing(true);
     setResult(null);
     try {
-      const response = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: textToAnalyze }) });
+      let imageBase64: string | undefined;
+      let imageMimeType: string | undefined;
+      if (imageFile) {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = () => reject(r.error ?? new Error('read_failed'));
+          r.readAsDataURL(imageFile);
+        });
+        const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (!m) {
+          toast.showToast('Could not read image data.', 'error');
+          setAnalyzing(false);
+          return;
+        }
+        imageMimeType = m[1];
+        imageBase64 = m[2];
+      }
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: typed,
+          ...(imageBase64 ? { imageBase64, imageMimeType } : {}),
+        }),
+      });
       const data = await response.json();
       if (!response.ok) {
         toast.showToast(data?.error || 'Request failed', 'error');
@@ -219,7 +249,9 @@ export default function DashboardClient() {
         return;
       }
       setResult(data as AnalysisResult);
-      const entry = addScan(userId, textToAnalyze.slice(0, 200), data as AnalysisResult);
+      const snippet =
+        typed.slice(0, 200) || (imageFile ? `[Screenshot: ${imageFile.name}]` : '');
+      const entry = addScan(userId, snippet, data as AnalysisResult);
       setHistoryEntry(entry);
       if (!isPro) incrementScansToday(userId);
     } catch {
@@ -309,6 +341,11 @@ export default function DashboardClient() {
               >
                 <p className={`${textPrimary} leading-relaxed text-lg`}>{result.verdict_summary}</p>
               </ScannerCollapsibleSection>
+              <ScanResultEnhancements
+                result={result}
+                isDark={isDark}
+                onCopy={(m) => toast.showToast(m)}
+              />
               {result.why_risky && (
                 <ScannerCollapsibleSection
                   sectionId="whyRisky"
@@ -324,11 +361,11 @@ export default function DashboardClient() {
                   <p className={`${textPrimary} leading-relaxed`}>{result.why_risky}</p>
                 </ScannerCollapsibleSection>
               )}
-              {inputText.trim() && (
+              {(inputText.trim() || (result.ocr_text && result.ocr_text.trim())) && (
                 <ScannerCollapsibleSection
                   sectionId="source"
                   title="Source text"
-                  summary="Your pasted message with risky phrases highlighted so you can see exactly what triggered the analysis."
+                  summary="Your pasted message and/or text read from a screenshot, with risky phrases highlighted where possible."
                   isOpen={openScannerSections.source}
                   onToggle={() => setOpenScannerSections((s) => ({ ...s, source: !s.source }))}
                   textPrimary={textPrimary}
@@ -336,7 +373,11 @@ export default function DashboardClient() {
                   cardBg={cardBg}
                   cardBorder={cardBorder}
                 >
-                  <HighlightedSourceText sourceText={inputText} result={result} isDark={isDark} />
+                  <HighlightedSourceText
+                    sourceText={`${inputText.trim()}${inputText.trim() && result.ocr_text?.trim() ? '\n\n--- from screenshot ---\n\n' : ''}${result.ocr_text?.trim() ?? ''}`}
+                    result={result}
+                    isDark={isDark}
+                  />
                 </ScannerCollapsibleSection>
               )}
               <ScannerCollapsibleSection
@@ -472,18 +513,18 @@ export default function DashboardClient() {
             </div>
             <div className="flex flex-col md:flex-row items-center justify-between p-4 gap-4">
               <div className="flex items-center gap-4 w-full md:w-auto">
-                <label className={`flex items-center gap-2 text-sm cursor-pointer transition-colors ${dashboardMuted}`} onDragEnter={() => setDragActive(true)} onDragLeave={() => setDragActive(false)} onDrop={(e) => { e.preventDefault(); setDragActive(false); if (e.dataTransfer.files?.[0]) setFileName(e.dataTransfer.files[0].name); }}>
+                <label className={`flex items-center gap-2 text-sm cursor-pointer transition-colors ${dashboardMuted}`} onDragEnter={() => setDragActive(true)} onDragLeave={() => setDragActive(false)} onDrop={(e) => { e.preventDefault(); setDragActive(false); const f = e.dataTransfer.files?.[0]; if (f && f.type.startsWith('image/')) setImageFile(f); }}>
                   <div className={`p-2 rounded-lg ${isDark ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-200 hover:bg-slate-300'}`}><Upload className="w-4 h-4" /></div>
-                  <span className="truncate max-w-[150px]">{fileName || 'Upload Screenshot'}</span>
-                  <input type="file" className="hidden" onChange={(e) => setFileName(e.target.files?.[0]?.name || null)} />
+                  <span className="truncate max-w-[180px]">{imageFile?.name || 'Upload screenshot'}</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} />
                 </label>
-                {fileName && <button type="button" onClick={() => setFileName(null)} className={`${textDim} hover:text-red-500`}><X className="w-4 h-4" /></button>}
+                {imageFile && <button type="button" onClick={() => setImageFile(null)} className={`${textDim} hover:text-red-500`} aria-label="Remove image"><X className="w-4 h-4" /></button>}
               </div>
               <button
                 data-tour-id="tour-analyze"
                 onClick={handleAnalyze}
-                disabled={analyzing || (!inputText && !fileName) || !canScan}
-                className={`w-full md:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors ${analyzing || (!inputText && !fileName) || !canScan ? (isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-200 text-slate-400') + ' cursor-not-allowed' : 'bg-teal-600 hover:bg-teal-700 text-white hover:shadow-lg hover:shadow-teal-600/25 active:scale-95'}`}
+                disabled={analyzing || (!inputText.trim() && !imageFile) || !canScan}
+                className={`w-full md:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors ${analyzing || (!inputText.trim() && !imageFile) || !canScan ? (isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-200 text-slate-400') + ' cursor-not-allowed' : 'bg-teal-600 hover:bg-teal-700 text-white hover:shadow-lg hover:shadow-teal-600/25 active:scale-95'}`}
               >
                 {analyzing ? <><RefreshCw className="w-5 h-5 animate-spin" /> Analyzing...</> : <><Scan className="w-5 h-5" /> Analyze Now</>}
               </button>

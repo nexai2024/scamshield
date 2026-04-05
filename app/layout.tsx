@@ -8,6 +8,7 @@ import { TourOverlay } from '@/components/TourOverlay';
 import { AppShell } from '@/components/AppShell';
 import './globals.css';
 import { Analytics } from "@vercel/analytics/next"
+import Script from 'next/script'
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -30,12 +31,14 @@ export default function RootLayout({
       <ToastProvider>
         <TourProvider>
           <html lang="en" suppressHydrationWarning>
+            
             <body
               className={`${plusJakarta.variable} font-sans antialiased min-h-screen bg-[#f4f7fb] text-slate-800 dark:bg-[#121a24] dark:text-slate-100`}
             >
               <AppShell>{children}</AppShell>
               <ToastContainer />
               <TourOverlay />
+              <script src="https://zenoassist.com/widget.js" data-zenoassist-v2 data-company-id="41753172-432d-4afe-935c-a6b9b406ac7c" data-position="bottom-right"></script>
             </body>
           </html>
           <Analytics />
