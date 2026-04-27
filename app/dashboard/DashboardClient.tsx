@@ -25,6 +25,7 @@ import { ScanResultEnhancements } from '@/components/analysis/ScanResultEnhancem
 import { VerificationRunway } from '@/components/analysis/VerificationRunway';
 import { InboundEmailCallout } from '@/components/InboundEmailCallout';
 import { ContextualHelp } from '@/components/ContextualHelp';
+import { ScamTrainingMode } from '@/components/ScamTrainingMode';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { useToast } from '@/context/ToastContext';
 import { useTour } from '@/context/TourContext';
@@ -146,6 +147,7 @@ export default function DashboardClient() {
   const [historyEntry, setHistoryEntry] = useState<{ id: string; date: string; snippet: string; risk_score: number; risk_level: AnalysisResult['risk_level']; scam_type: string; fullResult: AnalysisResult } | null>(null);
 
   const [openScannerSections, setOpenScannerSections] = useState(DEFAULT_SCANNER_SECTIONS_OPEN);
+  const [dashboardMode, setDashboardMode] = useState<'scanner' | 'training'>('scanner');
 
   const theme = getStoredTheme();
   const isDark = getEffectiveTheme(theme) === 'dark';
@@ -273,8 +275,42 @@ export default function DashboardClient() {
   return (
     <div className={`${CONTENT_MAX_W} mx-auto px-4 py-12 animate-in fade-in duration-500`}>
       <div className="mb-6">
+        <div className={`inline-flex rounded-xl border p-1 ${cardBg} ${cardBorder}`}>
+          <button
+            type="button"
+            onClick={() => setDashboardMode('scanner')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+              dashboardMode === 'scanner'
+                ? 'bg-teal-600 text-white'
+                : isDark
+                  ? 'text-slate-300 hover:bg-slate-800'
+                  : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            Scanner
+          </button>
+          <button
+            type="button"
+            onClick={() => setDashboardMode('training')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+              dashboardMode === 'training'
+                ? 'bg-teal-600 text-white'
+                : isDark
+                  ? 'text-slate-300 hover:bg-slate-800'
+                  : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            Training Mode
+          </button>
+        </div>
+      </div>
+      <div className="mb-6">
         <Breadcrumbs items={breadcrumbItems} isDark={isDark} />
       </div>
+      {dashboardMode === 'training' ? (
+        <ScamTrainingMode isDark={isDark} />
+      ) : (
+        <>
       {!canScan && (
         <div className="mb-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -547,6 +583,8 @@ export default function DashboardClient() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );
