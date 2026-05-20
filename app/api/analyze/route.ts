@@ -1,3 +1,4 @@
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { runFullAnalyze } from '@/lib/analysis/runAnalyze';
 import { guardAnalyzeRateLimit } from '@/lib/rateLimit/guard';
 import {
@@ -8,7 +9,8 @@ import {
   jsonUpstreamError,
   USER_SAFE,
 } from '@/lib/server/api-response';
-import { createLogger } from '@/lib/server/logger';
+import { createLogger, serializeError } from '@/lib/server/logger';
+import { appendScanAuditLogIfApplicable } from '@/lib/server/scanAuditLog';
 
 const log = createLogger('api:analyze');
 
@@ -93,6 +95,25 @@ export async function POST(request: Request) {
         code: outcome.openaiCode,
         provider: 'openai',
       });
+    }
+
+    const { userId } = await auth();
+    if (userId) {
+      try {
+        const clerk = await clerkClient();
+        const user = await clerk.users.getUser(userId);
+        await appendScanAuditLogIfApplicable({
+          userId,
+          userPublicMetadata: user.publicMetadata,
+          text,
+          imageBase64,
+          imageMimeType,
+          result: outcome.result,
+          requestId,
+        });
+      } catch (e) {
+        log.warn('scan_audit_append_skipped', { requestId, ...serializeError(e) });
+      }
     }
 
     return jsonOk(requestId, outcome.result);

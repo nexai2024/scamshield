@@ -24,6 +24,7 @@ import { HighlightedSourceText } from '@/components/analysis/HighlightedSourceTe
 import { ScanResultEnhancements } from '@/components/analysis/ScanResultEnhancements';
 import { VerificationRunway } from '@/components/analysis/VerificationRunway';
 import { InboundEmailCallout } from '@/components/InboundEmailCallout';
+import { ScanAuditConsentPanel } from '@/components/ScanAuditConsentPanel';
 import { ContextualHelp } from '@/components/ContextualHelp';
 import { ScamTrainingMode } from '@/components/ScamTrainingMode';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -520,6 +521,7 @@ export default function DashboardClient() {
             </div>
           </div>
           <InboundEmailCallout isDark={isDark} />
+          <ScanAuditConsentPanel isPro={isPro} isSignedIn={Boolean(user)} isDark={isDark} />
         </div>
       ) : (
         <div className="max-w-3xl mx-auto space-y-8">
@@ -532,6 +534,8 @@ export default function DashboardClient() {
           </div>
 
           <InboundEmailCallout isDark={isDark} />
+
+          <ScanAuditConsentPanel isPro={isPro} isSignedIn={Boolean(user)} isDark={isDark} />
 
           <div className={`${cardBg} border rounded-2xl p-2 shadow-2xl ${cardBorder}`} data-tour-id="tour-paste">
             <div className="relative">

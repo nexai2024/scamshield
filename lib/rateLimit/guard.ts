@@ -5,6 +5,8 @@ import {
   limitCheckoutSession,
   limitExtractEntities,
   limitInboundEmailWebhook,
+  limitLeads,
+  limitScanAudit,
   limitValidateEntity,
 } from '@/lib/rateLimit/limiters';
 import { rateLimitExceededResponse } from '@/lib/rateLimit/response';
@@ -39,6 +41,18 @@ export async function guardCheckoutRateLimit(userId: string): Promise<NextRespon
 
 export async function guardInboundEmailRateLimit(request: Request): Promise<NextResponse | null> {
   const result = await limitInboundEmailWebhook(getClientIp(request));
+  if (!result.success) return rateLimitExceededResponse(result);
+  return null;
+}
+
+export async function guardScanAuditRateLimit(userId: string): Promise<NextResponse | null> {
+  const result = await limitScanAudit(userId);
+  if (!result.success) return rateLimitExceededResponse(result);
+  return null;
+}
+
+export async function guardLeadsRateLimit(request: Request): Promise<NextResponse | null> {
+  const result = await limitLeads(getClientIp(request));
   if (!result.success) return rateLimitExceededResponse(result);
   return null;
 }

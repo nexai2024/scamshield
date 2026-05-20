@@ -24,6 +24,14 @@ const CHECKOUT_WINDOW = '1 m' as const;
 const INBOUND_MAX = 20;
 const INBOUND_WINDOW = '1 m' as const;
 
+/** Scan audit settings / list (authenticated). */
+const SCAN_AUDIT_MAX = 24;
+const SCAN_AUDIT_WINDOW = '1 m' as const;
+
+/** Marketing lead capture (by IP). */
+const LEADS_MAX = 6;
+const LEADS_WINDOW = '1 m' as const;
+
 const WINDOW_MS = 60_000;
 
 function createLimiterGetter(prefix: string, max: number, window: typeof ANALYZE_WINDOW) {
@@ -50,6 +58,8 @@ const getExtractLimiter = createLimiterGetter('extract', EXTRACT_MAX, EXTRACT_WI
 const getValidateLimiter = createLimiterGetter('validate', VALIDATE_MAX, VALIDATE_WINDOW);
 const getCheckoutLimiter = createLimiterGetter('checkout', CHECKOUT_MAX, CHECKOUT_WINDOW);
 const getInboundLimiter = createLimiterGetter('inbound', INBOUND_MAX, INBOUND_WINDOW);
+const getScanAuditLimiter = createLimiterGetter('scan_audit', SCAN_AUDIT_MAX, SCAN_AUDIT_WINDOW);
+const getLeadsLimiter = createLimiterGetter('leads', LEADS_MAX, LEADS_WINDOW);
 
 async function limitWithFallback(
   getRedisLimiter: () => Ratelimit | null,
@@ -95,6 +105,14 @@ export async function limitCheckoutSession(userId: string): Promise<RateLimitRes
 
 export async function limitInboundEmailWebhook(ip: string): Promise<RateLimitResult> {
   return limitWithFallback(getInboundLimiter, 'mem:inbound', ip, INBOUND_MAX, WINDOW_MS);
+}
+
+export async function limitScanAudit(userId: string): Promise<RateLimitResult> {
+  return limitWithFallback(getScanAuditLimiter, 'mem:scan_audit', userId, SCAN_AUDIT_MAX, WINDOW_MS);
+}
+
+export async function limitLeads(ip: string): Promise<RateLimitResult> {
+  return limitWithFallback(getLeadsLimiter, 'mem:leads', ip, LEADS_MAX, WINDOW_MS);
 }
 
 /**

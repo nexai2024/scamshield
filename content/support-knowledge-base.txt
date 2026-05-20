@@ -41,7 +41,6 @@ These capabilities work together to help you spot social engineering and common 
   • Visual analysis – Upload screenshots; the system can look for visual inconsistencies that may indicate forgery.
   • Instant verdicts – Risk score, risk level, scam type hints, and practical next steps.
   • Highlighted source – Review the original text with emphasis on suspicious segments (when shown in the UI).
-  • Verification runway – Structured checks around extracted entities such as URLs, names, and places (where available).
   • Scan history – Review past scans; saving behavior aligns with your plan and local storage (see Privacy).
   • Community scam reports – Share anonymized examples stored locally in your browser to learn from patterns (optional).
   • Optional browser extension – Select text on any page and open ScamShield with that text pre-filled (advanced users; see project extension docs).

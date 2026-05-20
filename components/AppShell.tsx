@@ -43,13 +43,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const showSidebar = userLoaded && Boolean(user) && pathname !== '/';
   const isMarketingScreenshotStudio = pathname?.startsWith('/marketing/screenshots') ?? false;
+  const isLandingPage = pathname === '/';
 
-  if (isMarketingScreenshotStudio) {
-    return (
-      <div className="min-h-screen font-sans bg-[#f4f7fb] text-slate-800 antialiased selection:bg-teal-500/25">
-        {children}
-      </div>
-    );
+  /** Marketing landing and screenshot studio ship their own chrome (header/footer). */
+  if (isLandingPage || isMarketingScreenshotStudio) {
+    return <>{children}</>;
   }
 
   return (
