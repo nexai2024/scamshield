@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { runFullAnalyze } from '@/lib/analysis/runAnalyze';
 import { guardAnalyzeRateLimit } from '@/lib/rateLimit/guard';
@@ -11,11 +12,26 @@ import {
 } from '@/lib/server/api-response';
 import { createLogger, serializeError } from '@/lib/server/logger';
 import { appendScanAuditLogIfApplicable } from '@/lib/server/scanAuditLog';
+import { resolveIsProForUser } from '@/lib/server/proAccess';
+import { resolveScanQuotaSubject } from '@/lib/server/scanSubject';
+import {
+  checkScanQuota,
+  recordSuccessfulScan,
+  scanQuotaResponseHeaders,
+  type ScanQuotaCheckResult,
+} from '@/lib/server/scanQuota';
 
 const log = createLogger('api:analyze');
 
 /** Link expansion + RDAP can take longer than the default function timeout on some hosts. */
 export const maxDuration = 60;
+
+function withScanQuotaHeaders(response: NextResponse, quota: ScanQuotaCheckResult): NextResponse {
+  for (const [name, value] of Object.entries(scanQuotaResponseHeaders(quota))) {
+    response.headers.set(name, value);
+  }
+  return response;
+}
 
 export async function POST(request: Request) {
   const requestId = getOrCreateRequestId(request);
@@ -50,6 +66,33 @@ export async function POST(request: Request) {
         requestId,
         'Provide non-empty "text" and/or "imageBase64" (screenshot) in the request body.',
         400
+      );
+    }
+
+    const subject = await resolveScanQuotaSubject(request);
+    const isPro = await resolveIsProForUser(subject.clerkUserId);
+    const quotaCheck = await checkScanQuota(subject, isPro);
+
+    if (!quotaCheck.allowed) {
+      if (quotaCheck.reason === 'daily_limit_exceeded') {
+        return withScanQuotaHeaders(
+          jsonClientError(
+            requestId,
+            'You have used your free scan for today. Upgrade to Pro for unlimited scans, or try again tomorrow (UTC).',
+            403,
+            'daily_limit_exceeded'
+          ),
+          quotaCheck
+        );
+      }
+      return withScanQuotaHeaders(
+        jsonClientError(
+          requestId,
+          'Scan quota is temporarily unavailable. Please try again shortly.',
+          503,
+          'quota_storage_unavailable'
+        ),
+        quotaCheck
       );
     }
 
@@ -116,7 +159,21 @@ export async function POST(request: Request) {
       }
     }
 
-    return jsonOk(requestId, outcome.result);
+    if (!isPro) {
+      await recordSuccessfulScan(subject);
+    }
+
+    const finalQuota: ScanQuotaCheckResult = isPro
+      ? { allowed: true, isPro: true, used: 0, limit: quotaCheck.limit, remaining: 999 }
+      : {
+          allowed: true,
+          isPro: false,
+          used: quotaCheck.used + 1,
+          limit: quotaCheck.limit,
+          remaining: Math.max(0, quotaCheck.limit - quotaCheck.used - 1),
+        };
+
+    return withScanQuotaHeaders(jsonOk(requestId, outcome.result), finalQuota);
   } catch (cause) {
     return jsonInternalError(requestId, 'api:analyze', cause);
   }

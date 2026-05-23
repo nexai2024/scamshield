@@ -1,9 +1,11 @@
-const KEY_PREFIX = 'scamshield_scans_';
-const FREE_DAILY_LIMIT = 1;
+import { FREE_DAILY_SCAN_LIMIT } from '@/lib/plans';
 
+const KEY_PREFIX = 'scamshield_scans_';
+
+/** UTC calendar date — must match server `lib/server/scanQuota.ts`. */
 function todayKey(userId: string): string {
   const d = new Date();
-  const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const dateStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
   return `${KEY_PREFIX}${userId}_${dateStr}`;
 }
 
@@ -21,7 +23,7 @@ export function getScansUsedToday(userId: string): number {
 
 export function canScanToday(userId: string, isSubscribed: boolean): boolean {
   if (isSubscribed) return true;
-  return getScansUsedToday(userId) < FREE_DAILY_LIMIT;
+  return getScansUsedToday(userId) < FREE_DAILY_SCAN_LIMIT;
 }
 
 export function incrementScansToday(userId: string): void {
@@ -34,4 +36,18 @@ export function incrementScansToday(userId: string): void {
   }
 }
 
-export const FREE_DAILY_LIMIT_CONST = FREE_DAILY_LIMIT;
+/** Sync local counter from analyze API response headers (server source of truth). */
+export function syncScansFromQuotaHeaders(headers: Headers, userId: string): void {
+  if (typeof window === 'undefined') return;
+  const used = headers.get('X-Scan-Quota-Used');
+  if (used == null) return;
+  const n = parseInt(used, 10);
+  if (Number.isNaN(n)) return;
+  try {
+    localStorage.setItem(todayKey(userId), String(Math.max(0, n)));
+  } catch {
+    // ignore
+  }
+}
+
+export const FREE_DAILY_LIMIT_CONST = FREE_DAILY_SCAN_LIMIT;

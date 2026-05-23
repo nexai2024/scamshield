@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -32,7 +32,12 @@ import { useToast } from '@/context/ToastContext';
 import { useTour } from '@/context/TourContext';
 import { CONTENT_MAX_W } from '@/lib/constants';
 import { GUEST_USER_ID } from '@/lib/constants';
-import { canScanToday, getScansUsedToday, incrementScansToday, FREE_DAILY_LIMIT_CONST } from '@/lib/utils/freeTier';
+import {
+  canScanToday,
+  getScansUsedToday,
+  syncScansFromQuotaHeaders,
+  FREE_DAILY_LIMIT_CONST,
+} from '@/lib/utils/freeTier';
 import { hasProAccess } from '@/lib/utils/subscription';
 import { addScan } from '@/lib/utils/scanHistory';
 import { addCommunityPost } from '@/lib/utils/communityPosts';
@@ -149,6 +154,7 @@ export default function DashboardClient() {
 
   const [openScannerSections, setOpenScannerSections] = useState(DEFAULT_SCANNER_SECTIONS_OPEN);
   const [dashboardMode, setDashboardMode] = useState<'scanner' | 'training'>('scanner');
+  const [scanQuotaTick, setScanQuotaTick] = useState(0);
 
   const theme = getStoredTheme();
   const isDark = getEffectiveTheme(theme) === 'dark';
@@ -162,8 +168,8 @@ export default function DashboardClient() {
   const dashboardMuted = isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900';
   const amberText = isDark ? 'text-amber-200' : 'text-amber-800';
 
-  const canScan = canScanToday(userId, isPro);
-  const scansUsed = getScansUsedToday(userId);
+  const scansUsed = useMemo(() => getScansUsedToday(userId), [userId, scanQuotaTick]);
+  const canScan = useMemo(() => canScanToday(userId, isPro), [userId, isPro, scanQuotaTick]);
 
   useEffect(() => {
     const prefill = searchParams.get('text');
@@ -247,16 +253,24 @@ export default function DashboardClient() {
       });
       const data = await response.json();
       if (!response.ok) {
-        toast.showToast(data?.error || 'Request failed', 'error');
+        if (response.status === 403 && data?.code === 'daily_limit_exceeded') {
+          syncScansFromQuotaHeaders(response.headers, userId);
+          setScanQuotaTick((t) => t + 1);
+          toast.showToast(data?.error || 'Daily free scan limit reached.', 'error');
+          window.location.href = '/pricing';
+        } else {
+          toast.showToast(data?.error || 'Request failed', 'error');
+        }
         setAnalyzing(false);
         return;
       }
+      syncScansFromQuotaHeaders(response.headers, userId);
+      setScanQuotaTick((t) => t + 1);
       setResult(data as AnalysisResult);
       const snippet =
         typed.slice(0, 200) || (imageFile ? `[Screenshot: ${imageFile.name}]` : '');
       const entry = addScan(userId, snippet, data as AnalysisResult);
       setHistoryEntry(entry);
-      if (!isPro) incrementScansToday(userId);
     } catch {
       toast.showToast('Failed to connect to the analysis service.', 'error');
     } finally {

@@ -112,6 +112,15 @@ With **Upstash Redis** configured, limits are shared across all server instances
 
 429 responses include `Retry-After`, `X-RateLimit-*`, and JSON `{ error, retryAfterSeconds }`. Set `RATE_LIMIT_DISABLED=true` only for local testing.
 
+## Scan quotas (plan limits)
+
+`POST /api/analyze` enforces **Free: 1 successful scan per UTC calendar day** per signed-in user or guest IP. **Pro** users (Stripe `publicMetadata.plan === 'pro'` and/or Clerk Billing subscription) are unlimited.
+
+- Counts are stored in **Upstash Redis** when configured (`scanquota:daily:*` keys); otherwise a dev in-memory fallback is used (not consistent across serverless instances — use Redis in production).
+- Quota is checked **before** analysis; usage is recorded **only after** a successful analysis.
+- Responses include `X-Scan-Quota-Limit`, `X-Scan-Quota-Used`, `X-Scan-Quota-Remaining`, and `X-Scan-Plan` (`free` | `pro`).
+- When the daily limit is exceeded: **403** with `{ code: "daily_limit_exceeded", error: "..." }` (distinct from abuse **429** rate limits).
+
 ## Security
 
 Do not commit `.env` or `.env.local`. Rotate any keys that were ever committed.
