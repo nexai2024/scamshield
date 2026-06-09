@@ -42,6 +42,12 @@ export function LandingFooter() {
         <p className="mt-8 text-xs text-muted-foreground text-center sm:text-left">
           © {year} ScamShield. We do not sell your data. Paste analysis is processed for your request only.
         </p>
+        <p>
+        <a href="https://plugyourbuild.com/listing/scamshield-c75884" rel="dofollow">
+  <img src="https://plugyourbuild.com/api/badge/scamshield-c75884?style=transparent"
+       alt="Listed on Plug Your Build" width="180" height="40" />
+</a>
+        </p>
       </div>
     </footer>
   );
